@@ -23,3 +23,9 @@ use App\Http\Controllers\UserController;
 //     Route::post('/register', [UserController::class, 'register']);
 // });
 Route::post('register', [UserController::class, 'register']);
+Route::post('login', [UserController::class, 'authenticate']);
+
+// Route::group(['middleware' => ['jwt.verify']], function () {
+//     Route::get('logout', [UserController::class, 'logout']);
+//     Route::get('get_user', [UserController::class, 'get_user']);
+// });
