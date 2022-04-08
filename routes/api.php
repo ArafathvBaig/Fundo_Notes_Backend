@@ -3,6 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ForgotPasswordController;
+use Illuminate\Support\Facades\Password;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,13 +21,14 @@ use App\Http\Controllers\UserController;
 //     return $request->user();
 // });
 
-// Route::group(['middleware' => 'api'], function () {
-//     Route::post('/register', [UserController::class, 'register']);
-// });
-Route::post('register', [UserController::class, 'register']);
-Route::post('login', [UserController::class, 'authenticate']);
+Route::group(['middleware' => 'api'], function () {
+    Route::post('/register', [UserController::class, 'register']);
+    Route::post('/login', [UserController::class, 'login']);
 
-// Route::group(['middleware' => ['jwt.verify']], function () {
-//     Route::get('logout', [UserController::class, 'logout']);
-//     Route::get('get_user', [UserController::class, 'get_user']);
-// });
+    Route::post('forgotPassword', [ForgotPasswordController::class, 'forgotPassword']);
+    Route::post('resetPassword', [ForgotPasswordController::class, 'resetPassword']);
+});
+
+Route::group(['middleware' => ['jwt.verify']], function () {
+    Route::get('getUser', [UserController::class, 'get_user']);
+});
