@@ -1,15 +1,17 @@
 <?php
 
 namespace App\Mail;
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 class Mailer
 {
-    public function sendEmail($email, $token)
+    public function sendEmail($user, $token)
     {
         $subject = 'Forgot Password';
-        $data = "Your password Reset Link" . $token;
+        //$data = "Hi, " . $user->first_name . " " . $user->last_name . "<br>Your Password Reset Link:<br>http://localhost:8000/resetPassword/" . $token;
+        $data = "Hi, " . $user->first_name . " " . $user->last_name . "<br>Your Password Reset Token:<br>" . $token;
 
         $mail = new PHPMailer(true);
 
@@ -20,19 +22,17 @@ class Mailer
             $mail->Username   = env('MAIL_USERNAME');
             $mail->Password   = env('MAIL_PASSWORD');
             $mail->SMTPSecure = 'tls';
-            $mail->Port       = 587;
+            $mail->Port       = env('MAIL_PORT');
             $mail->setFrom(env('MAIL_USERNAME'), env('MAIL_FROM_NAME'));
-            $mail->addAddress($email);
+            $mail->addAddress($user->email);
             $mail->isHTML(true);
             $mail->Subject =  $subject;
             $mail->Body    = $data;
-            $dt = $mail->send();
-            sleep(3);
-
-            if ($dt)
+            if ($mail->send()) {
                 return true;
-            else
+            } else {
                 return false;
+            }
         } catch (Exception $e) {
             return back()->with('error', 'Message could not be sent.');
         }

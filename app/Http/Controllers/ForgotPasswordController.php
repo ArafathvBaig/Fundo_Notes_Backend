@@ -35,50 +35,55 @@ class ForgotPasswordController extends Controller
             ]);
         }
 
-        $token = JWTAuth::attempt($email);
+        $token = JWTAuth::fromUser($user);
         if ($user) {
             $mail = new Mailer();
-            $mail->sendEmail($email, $token);
+            $check = $mail->sendEmail($user, $token);
+            if (!$check) {
+                return response()->json([
+                    'status' => 424,
+                    'message' => 'Email Not Sent.'
+                ]);
+            } else {
+                return response()->json([
+                    'status' => 200,
+                    'message' => 'Reset Password Token Sent to your Email.',
+                ]);
+            }
         }
-
-        return response()->json([
-            'status' => 200,
-            'message' => 'Reset Password Token Sent to your Email.'
-        ]);
     }
 
     public function resetPassword(Request $request)
     {
-        $data = $request->only('new_password', 'password_confirmation');
-
-        //validate token
-        $validator = Validator::make($data, [
+        //validate all credentials
+        $validator = Validator::make($request->all(), [
+            'token' => 'required',
             'new_password' => 'required|string|min:6|max:15',
             'password_confirmation' => 'required|same:new_password'
         ]);
 
+        //Send failed response if request is not valid
         if ($validator->fails()) {
-            return response()->json([
-                'status' => 400,
-                'message' => "Password doesn't match"
-            ]);
+            return response()->json(['error' => $validator->errors()], 200);
         }
 
-        $user = Auth::user();
-        $user = User::where('email', $user->email)->first();
+        $token = $request->token;
 
-        // if (!$user) {
-        //     return response()->json([
-        //         'status' => "404",
-        //         'message' => "Not a Registered Email"
-        //     ]);
-        // }
-        $user->password = bcrypt($request->new_password);
-        $user->save();
+        $user = JWTAuth::authenticate($token);
+        if (!$user) {
+            return response()->json([
+                'status' => "404",
+                'message' => "Invalid Token"
+            ]);
+        }
+        if ($user) {
+            $user->password = bcrypt($request->new_password);
+            $user->save();
 
-        return response()->json([
-            'status' => 201,
-            'message' => 'password reset successful.'
-        ]);
+            return response()->json([
+                'status' => 201,
+                'message' => 'password reset successful.'
+            ]);
+        }
     }
 }
