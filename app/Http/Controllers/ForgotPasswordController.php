@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Mail\Mailer;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Tymon\JWTAuth\Exceptions\JWTException;
 
 class ForgotPasswordController extends Controller
@@ -57,7 +58,6 @@ class ForgotPasswordController extends Controller
     {
         //validate all credentials
         $validator = Validator::make($request->all(), [
-            'token' => 'required',
             'new_password' => 'required|string|min:6|max:15',
             'password_confirmation' => 'required|same:new_password'
         ]);
@@ -67,23 +67,23 @@ class ForgotPasswordController extends Controller
             return response()->json(['error' => $validator->errors()], 200);
         }
 
-        $token = $request->token;
-
-        $user = JWTAuth::authenticate($token);
+        $user = JWTAuth::parseToken()->authenticate();
+        $user = User::where('email', $user->email)->first();
         if (!$user) {
+            Log::error('User Not found with this Email.', ['Email' => $user->email]);
             return response()->json([
-                'status' => "404",
-                'message' => "Invalid Token"
-            ]);
+                'status' => "400",
+                'message' => "User Not found with this Email."
+            ], 400);
         }
         if ($user) {
             $user->password = bcrypt($request->new_password);
             $user->save();
-
+            Log::info('Reset Successful: Email Id: ' . $user->email);
             return response()->json([
                 'status' => 201,
                 'message' => 'password reset successful.'
-            ]);
+            ], 201);
         }
     }
 }
