@@ -58,7 +58,7 @@ class ForgotPasswordController extends Controller
             return response()->json([
                 'status' => "404",
                 'message' => "Not a Registered Email"
-            ]);
+            ],404);
         }
 
         $token = JWTAuth::fromUser($user);
@@ -69,12 +69,12 @@ class ForgotPasswordController extends Controller
                 return response()->json([
                     'status' => 424,
                     'message' => 'Email Not Sent'
-                ]);
+                ],424);
             } else {
                 return response()->json([
                     'status' => 200,
                     'message' => 'Reset Password Token Sent to your Email',
-                ]);
+                ],200);
             }
         }
     }
