@@ -13,6 +13,31 @@ use Tymon\JWTAuth\Exceptions\JWTException;
 
 class ForgotPasswordController extends Controller
 {
+    /**
+     * @OA\Post(
+     *  path="/api/forgotPassword",
+     *  summary="Forgot Password",
+     *  description="Forgot Password for an user",
+     *  @OA\RequestBody(
+     *      @OA\JsonContent(),
+     *      @OA\MediaType(
+     *          mediaType="multipart/form-data",
+     *          @OA\Schema(
+     *              type="object",
+     *              required={"email"},
+     *              @OA\Property(property="email", type="email"),
+     *          ),  
+     *      ),
+     *  ),
+     *  @OA\Response(response=404, description="Not a Registered Email"),
+     *  @OA\Response(response=424, description="Email Not Sent"),
+     *  @OA\Response(response=200, description="Reset Password Token Sent to your Email")
+     * )
+     * 
+     * Forgot Password
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function forgotPassword(Request $request)
     {
         $email = $request->only('email');
@@ -43,17 +68,42 @@ class ForgotPasswordController extends Controller
             if (!$check) {
                 return response()->json([
                     'status' => 424,
-                    'message' => 'Email Not Sent.'
+                    'message' => 'Email Not Sent'
                 ]);
             } else {
                 return response()->json([
                     'status' => 200,
-                    'message' => 'Reset Password Token Sent to your Email.',
+                    'message' => 'Reset Password Token Sent to your Email',
                 ]);
             }
         }
     }
 
+    /**
+     * @OA\Post(
+     *  path="/api/resetPassword",
+     *  summary="Reset User Password",
+     *  description="Reset User Password using the token sent to the mail",
+     *  @OA\RequestBody(
+     *      @OA\JsonContent(),
+     *      @OA\MediaType(
+     *          mediaType="multipart/form-data",
+     *          @OA\Schema(
+     *              type="object",
+     *              required={"new_password","password_confirmation"},
+     *              @OA\Property(property="new_password", type="string"),
+     *              @OA\Property(property="password_confirmation", type="string")
+     *          ),  
+     *      ),
+     *  ),
+     *  @OA\Response(response=400, description="User Not found with this Email"),
+     *  @OA\Response(response=201, description="Password Reset Successful")
+     * )
+     * 
+     * Reset User Password
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function resetPassword(Request $request)
     {
         //validate all credentials
@@ -73,7 +123,7 @@ class ForgotPasswordController extends Controller
             Log::error('User Not found with this Email.', ['Email' => $user->email]);
             return response()->json([
                 'status' => "400",
-                'message' => "User Not found with this Email."
+                'message' => "User Not found with this Email"
             ], 400);
         }
         if ($user) {
@@ -82,7 +132,7 @@ class ForgotPasswordController extends Controller
             Log::info('Reset Successful: Email Id: ' . $user->email);
             return response()->json([
                 'status' => 201,
-                'message' => 'password reset successful.'
+                'message' => 'Password Reset Successful'
             ], 201);
         }
     }

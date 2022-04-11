@@ -1,0 +1,179 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Your super  ApplicationAPI",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/forgotPassword": {
+            "post": {
+                "summary": "Forgot Password",
+                "description": "Forgot Password for an user",
+                "operationId": "f04608ed3c65a150ce67d9e12421b68c",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "email"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "404": {
+                        "description": "Not a Registered Email"
+                    },
+                    "424": {
+                        "description": "Email Not Sent"
+                    },
+                    "200": {
+                        "description": "Reset Password Token Sent to your Email"
+                    }
+                }
+            }
+        },
+        "/api/resetPassword": {
+            "post": {
+                "summary": "Reset User Password",
+                "description": "Reset User Password using the token sent to the mail",
+                "operationId": "bd437661db6f11362ce363815da51517",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "new_password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "new_password": {
+                                        "type": "string"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "400": {
+                        "description": "User Not found with this Email"
+                    },
+                    "201": {
+                        "description": "Password Reset Successful"
+                    }
+                }
+            }
+        },
+        "/api/register": {
+            "post": {
+                "summary": "register",
+                "description": "Register a new user",
+                "operationId": "2f25885f3b6f61ca11724ec302d2e439",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "first_name",
+                                    "last_name",
+                                    "email",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "first_name": {
+                                        "type": "string"
+                                    },
+                                    "last_name": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "email"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User Successfully Registered"
+                    }
+                }
+            }
+        },
+        "/api/login": {
+            "post": {
+                "summary": "login",
+                "description": "Login by email, password",
+                "operationId": "0fc9610184083ac6dddab2c63139225a",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "email"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "404": {
+                        "description": "Not a Registered Email"
+                    },
+                    "402": {
+                        "description": "Wrong Password"
+                    },
+                    "500": {
+                        "description": "Could not create token"
+                    },
+                    "201": {
+                        "description": "Login Successful"
+                    }
+                }
+            }
+        }
+    }
+}
