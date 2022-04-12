@@ -79,7 +79,12 @@
                     "201": {
                         "description": "Password Reset Successful"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
             }
         },
         "/api/register": {
@@ -173,6 +178,16 @@
                         "description": "Login Successful"
                     }
                 }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "Bearer": {
+                "type": "http",
+                "description": "Laravel bearer token authentication",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
             }
         }
     }

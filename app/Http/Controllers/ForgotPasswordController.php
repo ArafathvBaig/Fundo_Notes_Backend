@@ -58,7 +58,7 @@ class ForgotPasswordController extends Controller
             return response()->json([
                 //'status' => "404",
                 'message' => "Not a Registered Email"
-            ],404);
+            ], 404);
         }
 
         $token = JWTAuth::fromUser($user);
@@ -69,12 +69,12 @@ class ForgotPasswordController extends Controller
                 return response()->json([
                     // 'status' => 424,
                     'message' => 'Email Not Sent'
-                ],424);
+                ], 424);
             } else {
                 return response()->json([
                     //'status' => 200,
                     'message' => 'Reset Password Token Sent to your Email',
-                ],200);
+                ], 200);
             }
         }
     }
@@ -97,7 +97,10 @@ class ForgotPasswordController extends Controller
      *      ),
      *  ),
      *  @OA\Response(response=400, description="User Not found with this Email"),
-     *  @OA\Response(response=201, description="Password Reset Successful")
+     *  @OA\Response(response=201, description="Password Reset Successful"),
+     *  security={
+     *      {"Bearer": {}}
+     *  }
      * )
      * 
      * Reset User Password
@@ -125,8 +128,7 @@ class ForgotPasswordController extends Controller
                 //'status' => "400",
                 'message' => "User Not found with this Email"
             ], 400);
-        }
-        if ($user) {
+        } else {
             $user->password = bcrypt($request->new_password);
             $user->save();
             Log::info('Reset Successful: Email Id: ' . $user->email);
