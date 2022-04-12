@@ -51,8 +51,15 @@ class UserController extends Controller
             'password_confirmation' => 'required|same:password'
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 200);
+        // if ($validator->fails()) {
+        //     return response()->json(['error' => $validator->errors()], 200);
+        // }
+
+        $user = User::where('email', $request->email)->first();
+        if ($user) {
+            return response()->json([
+                'message' => 'The email has already been taken.'
+            ], 401);
         }
 
         User::createUser($request);
@@ -111,12 +118,12 @@ class UserController extends Controller
         try {
             if (!$user) {
                 return response()->json([
-                    'status' => 404,
+                    // 'status' => 404,
                     'message' => 'Not a Registered Email'
                 ], 404);
             } elseif (!Hash::check($request->password, $user->password)) {
                 return response()->json([
-                    'status' => 402,
+                    // 'status' => 402,
                     'message' => 'Wrong Password'
                 ], 402);
             }
@@ -131,9 +138,9 @@ class UserController extends Controller
         //Token created, return with success response and jwt token
         $token = JWTAuth::attempt($credentials);
         return response()->json([
-            'status' => 201,
+            //'status' => 201,
             'success' => 'Login Successful',
-            'token' => $token
+            //'token' => $token
         ], 201);
     }
 

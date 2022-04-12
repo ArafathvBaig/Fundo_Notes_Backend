@@ -56,7 +56,7 @@ class ForgotPasswordController extends Controller
 
         if (!$user) {
             return response()->json([
-                'status' => "404",
+                //'status' => "404",
                 'message' => "Not a Registered Email"
             ],404);
         }
@@ -67,12 +67,12 @@ class ForgotPasswordController extends Controller
             $check = $mail->sendEmail($user, $token);
             if (!$check) {
                 return response()->json([
-                    'status' => 424,
+                    // 'status' => 424,
                     'message' => 'Email Not Sent'
                 ],424);
             } else {
                 return response()->json([
-                    'status' => 200,
+                    //'status' => 200,
                     'message' => 'Reset Password Token Sent to your Email',
                 ],200);
             }
@@ -122,7 +122,7 @@ class ForgotPasswordController extends Controller
         if (!$user) {
             Log::error('User Not found with this Email.', ['Email' => $user->email]);
             return response()->json([
-                'status' => "400",
+                //'status' => "400",
                 'message' => "User Not found with this Email"
             ], 400);
         }
@@ -131,7 +131,7 @@ class ForgotPasswordController extends Controller
             $user->save();
             Log::info('Reset Successful: Email Id: ' . $user->email);
             return response()->json([
-                'status' => 201,
+                //'status' => 201,
                 'message' => 'Password Reset Successful'
             ], 201);
         }
