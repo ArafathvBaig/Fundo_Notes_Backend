@@ -140,7 +140,7 @@ class UserController extends Controller
         return response()->json([
             //'status' => 201,
             'success' => 'Login Successful',
-            //'token' => $token
+            'token' => $token
         ], 201);
     }
 
