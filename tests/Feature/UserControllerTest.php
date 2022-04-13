@@ -21,9 +21,9 @@ class UserControllerTest extends TestCase
             ->json('POST', '/api/register', [
                 "first_name" => "Arafath",
                 "last_name" => "Baig",
-                "email" => "arafathbaig@gamil.com",
-                "password" => "abcdefghij",
-                "password_confirmation" => "abcdefghij"
+                "email" => "arafathbaig1@gamil.com",
+                "password" => "abcdefghij1",
+                "password_confirmation" => "abcdefghij1"
             ]);
         $response->assertStatus(201)->assertJson(['message' => 'User Successfully Registered']);
     }
@@ -95,7 +95,23 @@ class UserControllerTest extends TestCase
                 "email" => "arafathbaig1997@gmail.com"
             ]);
 
-            $response->assertStatus(200)->assertJson(['message' => 'Reset Password Token Sent to your Email']);
+            $response->assertStatus(404)->assertJson(['message' => 'Reset Password Token Sent to your Email']);
+        }
+    }
+
+    /**
+     * Test for UnSuccessfull Forgot Password
+     * @test
+     */
+    public function unsuccessfulForgotPasswordTest()
+    { {
+            $response = $this->withHeaders([
+                'Content-Type' => 'Application/json',
+            ])->json('POST', '/api/forgotPassword', [
+                "email" => "arafathbaig123@gmail.com"
+            ]);
+
+            $response->assertStatus(404)->assertJson(['message' => 'Not a Registered Email']);
         }
     }
 
@@ -110,10 +126,28 @@ class UserControllerTest extends TestCase
             ])->json('POST', '/api/resetPassword', [
                 "new_password" => "arafath1234",
                 "password_confirmation" => "arafath1234",
-                "token" => 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9sb2NhbGhvc3Q6ODAwMFwvYXBpXC9mb3Jnb3RQYXNzd29yZCIsImlhdCI6MTY0OTY1NTUyMCwiZXhwIjoxNjQ5NjU5MTIwLCJuYmYiOjE2NDk2NTU1MjAsImp0aSI6IlVLUTFMaWpIN2I0ZUFmR0wiLCJzdWIiOjYsInBydiI6IjIzYmQ1Yzg5NDlmNjAwYWRiMzllNzAxYzQwMDg3MmRiN2E1OTc2ZjcifQ.MmcwniPLKMFgt5YSIBkCLCd6D8_RH6-6qhRb8SNp0W4'
+                "token" => 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9sb2NhbGhvc3RcL2FwaVwvZm9yZ290UGFzc3dvcmQiLCJpYXQiOjE2NDk4MjgzMDgsImV4cCI6MTY0OTgzMTkwOCwibmJmIjoxNjQ5ODI4MzA4LCJqdGkiOiI1SURSMzdCY2lIR2VNak41Iiwic3ViIjozLCJwcnYiOiIyM2JkNWM4OTQ5ZjYwMGFkYjM5ZTcwMWM0MDA4NzJkYjdhNTk3NmY3In0.d93SpbOT1aL1qAOH9qjWfP2OdqfeB27vMV2fkx1hShA'
             ]);
 
             $response->assertStatus(201)->assertJson(['message' => 'Password Reset Successful']);
+        }
+    }
+
+    /**
+     * Test for unSuccessfull Reset Password
+     * @test
+     */
+    public function unsuccessfulResetPasswordTest()
+    { {
+            $response = $this->withHeaders([
+                'Content-Type' => 'Application/json',
+            ])->json('POST', '/api/resetPassword', [
+                "new_password" => "arafath1234",
+                "password_confirmation" => "arafath1234",
+                "token" => '1234567890'
+            ]);
+
+            $response->assertStatus(400)->assertJson(['message' => 'Wrong number of segments']);
         }
     }
 }
