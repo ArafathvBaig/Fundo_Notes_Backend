@@ -10,6 +10,6 @@ class FundoNotesException extends Exception
         return response()->json([
             'status' => $this->getCode(),
             'message' => $this->getMessage()
-        ]);
+        ], $this->getCode());
     }
 }

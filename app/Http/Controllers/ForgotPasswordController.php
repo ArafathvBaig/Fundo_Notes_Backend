@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\FundoNotesException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\User;
@@ -56,7 +57,6 @@ class ForgotPasswordController extends Controller
 
         if (!$user) {
             return response()->json([
-                //'status' => "404",
                 'message' => "Not a Registered Email"
             ], 404);
         }
@@ -67,12 +67,10 @@ class ForgotPasswordController extends Controller
             $check = $mail->sendEmail($user, $token);
             if (!$check) {
                 return response()->json([
-                    // 'status' => 424,
                     'message' => 'Email Not Sent'
                 ], 424);
             } else {
                 return response()->json([
-                    //'status' => 200,
                     'message' => 'Reset Password Token Sent to your Email',
                 ], 200);
             }
@@ -109,33 +107,37 @@ class ForgotPasswordController extends Controller
      */
     public function resetPassword(Request $request)
     {
-        //validate all credentials
-        $validator = Validator::make($request->all(), [
-            'new_password' => 'required|string|min:6|max:15',
-            'password_confirmation' => 'required|same:new_password'
-        ]);
+        try {
+            //validate all credentials
+            $validator = Validator::make($request->all(), [
+                'new_password' => 'required|string|min:6|max:15',
+                'password_confirmation' => 'required|same:new_password'
+            ]);
 
-        //Send failed response if request is not valid
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 200);
-        }
+            //Send failed response if request is not valid
+            if ($validator->fails()) {
+                return response()->json(['error' => $validator->errors()], 200);
+            }
 
-        $user = JWTAuth::parseToken()->authenticate();
-        $user = User::where('email', $user->email)->first();
-        if (!$user) {
-            Log::error('User Not found with this Email.', ['Email' => $user->email]);
+            $user = JWTAuth::parseToken()->authenticate();
+            if (!$user) {
+                Log::error('User Not Found With This Email');
+                return response()->json([
+                    'message' => "User Not Found With This Email"
+                ], 400);
+            } else {
+                $user = User::where('email', $user->email)->first();
+                $user->password = bcrypt($request->new_password);
+                $user->save();
+                Log::info('Reset Successful: Email Id: ' . $user->email);
+                return response()->json([
+                    'message' => 'Password Reset Successful'
+                ], 201);
+            }
+        } catch (JWTException $exception) {
             return response()->json([
-                //'status' => "400",
-                'message' => "User Not found with this Email"
+                'message' => $exception->getMessage()
             ], 400);
-        } else {
-            $user->password = bcrypt($request->new_password);
-            $user->save();
-            Log::info('Reset Successful: Email Id: ' . $user->email);
-            return response()->json([
-                //'status' => 201,
-                'message' => 'Password Reset Successful'
-            ], 201);
         }
     }
 }

@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
@@ -51,23 +52,23 @@ class UserController extends Controller
             'password_confirmation' => 'required|same:password'
         ]);
 
-        // if ($validator->fails()) {
-        //     return response()->json(['error' => $validator->errors()], 200);
-        // }
-
         $user = User::where('email', $request->email)->first();
         if ($user) {
+            Log::info('The email has already been taken: ' . $user->email);
             return response()->json([
                 'message' => 'The email has already been taken.'
             ], 401);
         }
+        if ($validator->fails()) {
+            return response()->json([$validator->errors()], 401);
+        }
 
         User::createUser($request);
-
+        Log::info('User Successfully Registered.');
         return response()->json([
             'status' => 201,
             'message' => 'User Successfully Registered'
-        ],201);
+        ], 201);
     }
 
     /**
@@ -117,18 +118,19 @@ class UserController extends Controller
         $user = User::where('email', $request->email)->first();
         try {
             if (!$user) {
+                Log::error('Not a Registered Email');
                 return response()->json([
-                    // 'status' => 404,
                     'message' => 'Not a Registered Email'
                 ], 404);
             } elseif (!Hash::check($request->password, $user->password)) {
+                Log::error('Wrong Password');
                 return response()->json([
-                    // 'status' => 402,
                     'message' => 'Wrong Password'
                 ], 402);
             }
         } catch (JWTException $e) {
             return $credentials;
+            Log::error('Could not create token');
             return response()->json([
                 'status' => 500,
                 'message' => 'Could not create token',
@@ -137,8 +139,8 @@ class UserController extends Controller
 
         //Token created, return with success response and jwt token
         $token = JWTAuth::attempt($credentials);
+        Log::info('Login Successful');
         return response()->json([
-            //'status' => 201,
             'success' => 'Login Successful',
             'token' => $token
         ], 201);
