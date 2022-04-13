@@ -87,6 +87,168 @@
                 ]
             }
         },
+        "/api/createNotes": {
+            "post": {
+                "summary": "Create Note",
+                "description": "Create Notes for User",
+                "operationId": "1bc5d53fac8793431452eefbe1555dc9",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "title",
+                                    "description"
+                                ],
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Notes Created Successfully"
+                    },
+                    "401": {
+                        "description": "Invalid Authorization Token"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/displayNoteById": {
+            "get": {
+                "summary": "Display Note",
+                "description": "Display Notes For an User",
+                "operationId": "2c0e140bd8bdc84ff5c310dc3c265b02",
+                "requestBody": {},
+                "responses": {
+                    "200": {
+                        "description": "All Notes are Fetched Successfully"
+                    },
+                    "404": {
+                        "description": "Notes Not Found"
+                    },
+                    "401": {
+                        "description": "Invalid Authorization Token"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/updateNoteById": {
+            "post": {
+                "summary": "update note",
+                "description": "update user note",
+                "operationId": "a11e25c459bae96f3c862f767bfb8430",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "id",
+                                    "title",
+                                    "description"
+                                ],
+                                "properties": {
+                                    "id": {
+                                        "type": "integer"
+                                    },
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Note Updated Successfully"
+                    },
+                    "401": {
+                        "description": "Invalid Authorization Token"
+                    },
+                    "404": {
+                        "description": "Notes Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/deleteNoteById": {
+            "post": {
+                "summary": "Delete Note",
+                "description": "Delete User Note",
+                "operationId": "66a7fe4320633b5b8ea9f1baffb95690",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "id"
+                                ],
+                                "properties": {
+                                    "id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Note Deleted Successfully"
+                    },
+                    "404": {
+                        "description": "Notes Not Found"
+                    },
+                    "401": {
+                        "description": "Invalid Authorization Token"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
         "/api/register": {
             "post": {
                 "summary": "register",
