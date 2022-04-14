@@ -5,25 +5,29 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Note extends Model
+class LabelNotes extends Model
 {
     use HasFactory;
-    protected $table = 'notes';
+
+    protected $table = "label_notes";
     protected $fillable = [
-        'title',
-        'description'
+        'label_id',
+        'user_id',
+        'note_id'
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
     }
+
     public function label()
     {
-        return $this->hasMany(Label::class);
+        return $this->belongsTo(Label::class);
     }
-    public function labelnote()
+
+    public function note()
     {
-        return $this->belongsTo(LabelNotes::class);
+        return $this->belongsTo(Notes::class);
     }
 }

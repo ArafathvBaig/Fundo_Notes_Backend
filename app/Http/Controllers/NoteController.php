@@ -183,8 +183,7 @@ class NoteController extends Controller
                     'message' => 'Invalid Authorization Token'
                 ], 401);
             } else {
-                $notes = Note::where('user_id', $currentUser->id)->get();
-                $notes = Note::where('id', $id)->first();
+                $notes = Note::where('id', $id)->where('user_id', $currentUser->id)->first();
                 if (!$notes) {
                     return response()->json([
                         'message' => 'Notes Not Found'
@@ -257,8 +256,7 @@ class NoteController extends Controller
                     'message' => 'Invalid Authorization Token'
                 ], 401);
             } else {
-                $notes = Note::where('user_id', $currentUser->id)->get();
-                $notes = Note::where('id', $id)->first();
+                $notes = Note::where('id', $id)->where('user_id', $currentUser->id)->first();
                 if (!$notes) {
                     return response()->json([
                         'message' => 'Notes Not Found'

@@ -5,22 +5,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Note extends Model
+class Label extends Model
 {
     use HasFactory;
-    protected $table = 'notes';
-    protected $fillable = [
-        'title',
-        'description'
-    ];
+
+    protected $table = "labels";
+    protected $fillable = ['label_name'];
 
     public function user()
     {
         return $this->belongsTo(User::class);
     }
-    public function label()
+    public function note()
     {
-        return $this->hasMany(Label::class);
+        return $this->belongsTo(Notes::class);
     }
     public function labelnote()
     {

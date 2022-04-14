@@ -44,15 +44,31 @@ class User extends Authenticatable implements JWTSubject
         'email_verified_at' => 'datetime',
     ];
 
+    /**
+     * Get the identifier that will be stored in the subject claim of the JWT.
+     *
+     * @return mixed
+     */
     public function getJWTIdentifier()
     {
         return $this->getKey();
     }
+
+    /**
+     * Return a key value array, containing any custom claims to be added to the JWT.
+     *
+     * @return array
+     */
     public function getJWTCustomClaims()
     {
         return [];
     }
 
+    /**
+     * Creates a new user with the attributes given
+     * 
+     * @return array
+     */
     public static function createUser($request)
     {
         $user = User::create([
@@ -68,5 +84,13 @@ class User extends Authenticatable implements JWTSubject
     public function notes()
     {
         return $this->hasMany('App\Models\Note');
-    }    
+    }  
+    public function labels()
+    {
+        return $this->hasmany('App\Models\Label');
+    }
+    public function label_notes()
+    {
+        return $this->hasmany('App\Models\LabelNotes');
+    } 
 }

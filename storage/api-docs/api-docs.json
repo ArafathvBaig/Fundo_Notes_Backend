@@ -341,6 +341,27 @@
                     }
                 }
             }
+        },
+        "/api/logout": {
+            "post": {
+                "summary": "logout",
+                "description": "logout user",
+                "operationId": "67d5147477c548bfbc3f982833bbc7bd",
+                "requestBody": {},
+                "responses": {
+                    "201": {
+                        "description": "User Successfully Logged Out"
+                    },
+                    "401": {
+                        "description": "Invalid Authorization Token"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
         }
     },
     "components": {

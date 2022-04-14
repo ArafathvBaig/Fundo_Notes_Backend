@@ -150,4 +150,36 @@ class UserControllerTest extends TestCase
             $response->assertStatus(400)->assertJson(['message' => 'Wrong number of segments']);
         }
     }
+
+    /**
+     * Test for Successfull Logout
+     * @test
+     */
+    public function successfulLogoutTest()
+    { {
+            $response = $this->withHeaders([
+                'Content-Type' => 'Application/json',
+            ])->json('POST', '/api/logout', [
+                "token" => 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9sb2NhbGhvc3Q6ODAwMFwvYXBpXC9sb2dpbiIsImlhdCI6MTY0OTkyNTI2MCwiZXhwIjoxNjQ5OTI4ODYwLCJuYmYiOjE2NDk5MjUyNjAsImp0aSI6InI2VklQYlJkWXRscFFjU2EiLCJzdWIiOjQsInBydiI6IjIzYmQ1Yzg5NDlmNjAwYWRiMzllNzAxYzQwMDg3MmRiN2E1OTc2ZjcifQ.pd5x0pBsl9vdZaKPl2QMh_9WKRPNv2r5sFDjAgW5VTE'
+            ]);
+
+            $response->assertStatus(201)->assertJson(['message' => 'User Successfully Logged Out']);
+        }
+    }
+    
+    /**
+     * Test for unSuccessfull Logout
+     * @test
+     */
+    public function unsuccessfulLogoutTest()
+    { {
+            $response = $this->withHeaders([
+                'Content-Type' => 'Application/json',
+            ])->json('POST', '/api/logout', [
+                "token" => '1234567890'
+            ]);
+
+            $response->assertStatus(400)->assertJson(['message' => 'Wrong number of segments']);
+        }
+    }
 }

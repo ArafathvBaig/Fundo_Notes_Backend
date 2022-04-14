@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\NoteController;
+use App\Http\Controllers\LabelController;
 use Illuminate\Support\Facades\Password;
 
 /*
@@ -23,8 +24,9 @@ use Illuminate\Support\Facades\Password;
 // });
 
 Route::group(['middleware' => 'api'], function () {
-    Route::post('/register', [UserController::class, 'register']);
-    Route::post('/login', [UserController::class, 'login']);
+    Route::post('register', [UserController::class, 'register']);
+    Route::post('login', [UserController::class, 'login']);
+    Route::post('logout', [UserController::class, 'logout']);
 
     Route::post('forgotPassword', [ForgotPasswordController::class, 'forgotPassword']);
     Route::post('resetPassword', [ForgotPasswordController::class, 'resetPassword']);
@@ -33,6 +35,13 @@ Route::group(['middleware' => 'api'], function () {
     Route::get('displayNoteById', [NoteController::class, 'displayNoteById']);
     Route::post('updateNoteById', [NoteController::class, 'updateNoteById']);
     Route::post('deleteNoteById', [NoteController::class, 'deleteNoteById']);
+
+    Route::post('createLabel', [LabelController::class, 'createLabel']);
+    Route::get('readAllLabels', [LabelController::class, 'readAllLabels']);
+    Route::post('updateLabel', [LabelController::class, 'updateLabel']);
+    Route::post('deleteLabel', [LabelController::class, 'deleteLabel']);
+    Route::post('addNoteLabel', [LabelController::class, 'addNoteLabel']);
+    Route::post('deleteNoteLabel', [LabelController::class, 'deleteNoteLabel']);
 });
 
 Route::group(['middleware' => ['jwt.verify']], function () {

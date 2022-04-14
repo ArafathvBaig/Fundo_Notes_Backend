@@ -146,6 +146,30 @@ class UserController extends Controller
         ], 201);
     }
 
+    /**
+     * * @OA\Post(
+     *   path="/api/logout",
+     *   summary="logout",
+     *   description="logout user",
+     *   @OA\RequestBody(),
+     *   @OA\Response(response=201, description="User Successfully Logged Out"),
+     *   @OA\Response(response=401, description="Invalid Authorization Token"),
+     *   security={
+     *       {"Bearer": {}}
+     *     }
+     * )
+     * Logout User
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function logout()
+    {
+        auth()->logout();
+        return response()->json([
+            'message' => 'User Successfully Logged Out'
+        ], 201);
+    }
+
     public function get_user(Request $request)
     {
         $this->validate($request, [
