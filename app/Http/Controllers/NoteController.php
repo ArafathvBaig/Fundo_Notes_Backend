@@ -20,7 +20,7 @@ class NoteController extends Controller
 {
     /**
      * @OA\Post(
-     *   path="/api/createNotes",
+     *   path="/api/createNote",
      *   summary="Create Note",
      *   description="Create Notes for User",
      *   @OA\RequestBody(
