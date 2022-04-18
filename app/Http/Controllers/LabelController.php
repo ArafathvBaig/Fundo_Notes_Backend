@@ -120,7 +120,7 @@ class LabelController extends Controller
                 $label = Label::where('user_id', $user->id)->get();
                 if (!$label) {
                     return response()->json([
-                        'message' => 'Notes Not Found'
+                        'message' => 'Labels Not Found'
                     ], 404);
                 } else {
                     return response()->json([
