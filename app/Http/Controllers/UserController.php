@@ -169,6 +169,7 @@ class UserController extends Controller
     public function logout()
     {
         auth()->logout();
+        Log::info('User Successfully Logged Out');
         return response()->json([
             'message' => 'User Successfully Logged Out'
         ], 201);

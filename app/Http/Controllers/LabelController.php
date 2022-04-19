@@ -6,6 +6,7 @@ use App\Models\Label;
 use App\Models\LabelNotes;
 use App\Models\Note;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -58,22 +59,26 @@ class LabelController extends Controller
 
             $user = JWTAuth::parseToken()->authenticate();
             if (!$user) {
+                Log::error('Invalid Authorization Token');
                 return response()->json([
                     'message' => 'Invalid Authorization Token'
                 ], 401);
             } else {
                 $label = Label::getLabelByLabelNameandUserId($request->labelname, $user->id);
                 if ($label) {
+                    Log::info('Label Name Already Exists');
                     return response()->json([
                         'message' => 'Label Name Already Exists'
                     ], 409);
                 } else {
                     $label = Label::createLabel($request->labelname, $user->id);
                     if ($label) {
+                        Log::info('Label Added Sucessfully');
                         return response()->json([
                             'message' => 'Label Added Sucessfully',
                         ], 201);
                     } else {
+                        Log::info('Label Not Added');
                         return response()->json([
                             'message' => 'Label Not Added',
                         ], 202);
@@ -112,16 +117,19 @@ class LabelController extends Controller
         try {
             $user = JWTAuth::parseToken()->authenticate();
             if (!$user) {
+                Log::error('Invalid Authorization Token');
                 return response()->json([
                     'message' => 'Invalid authorization token'
                 ], 401);
             } else {
                 $label = Label::getLabelsByUserId($user->id);
                 if (!$label) {
+                    Log::error('Labels Not Found');
                     return response()->json([
                         'message' => 'Labels Not Found'
                     ], 404);
                 } else {
+                    Log::info('Labels Retrieved Successfully.');
                     return response()->json([
                         'message' => 'Labels Retrieved Successfully.',
                         'Label' => $label
@@ -182,12 +190,14 @@ class LabelController extends Controller
 
             $user = JWTAuth::parseToken()->authenticate();
             if (!$user) {
+                Log::error('Invalid Authorization Token');
                 return response()->json([
                     'message' => 'Invalid Authorization Token'
                 ], 401);
             } else {
                 $label = Label::getLabelByLabelIdandUserId($request->id, $user->id);
                 if (!$label) {
+                    Log::error('Label Not Found');
                     return response()->json([
                         'message' => 'Label Not Found'
                     ], 404);
@@ -195,15 +205,18 @@ class LabelController extends Controller
                     if ($label->labelname != $request->labelname) {
                         $label = Label::updateLabel($request->id, $request->labelname, $user->id);
                         if ($label) {
+                            Log::info('Label Updated Successfully');
                             return response()->json([
                                 'message' => "Label Updated Successfully"
                             ], 201);
                         } else {
+                            Log::info('Label Not Updated');
                             return response()->json([
                                 'message' => "Label Not Updated"
                             ], 202);
                         }
                     } else {
+                        Log::info('Label Name Already Exists');
                         return response()->json([
                             'message' => 'Label Name Already Exists'
                         ], 409);
@@ -260,17 +273,20 @@ class LabelController extends Controller
 
             $user = JWTAuth::parseToken()->authenticate();
             if (!$user) {
+                Log::error('Invalid Authorization Token');
                 return response()->json([
                     'message' => 'Invalid Authorization Token'
                 ], 401);
             } else {
                 $labels = Label::getLabelByLabelIdandUserId($request->id, $user->id);
                 if (!$labels) {
+                    Log::error('Label Not Found');
                     return response()->json([
                         'message' => 'Label Not Found'
                     ], 404);
                 } else {
                     $labels->delete($labels->id);
+                    Log::info('Label Successfully Deleted');
                     return response()->json([
                         'message' => 'Label Successfully Deleted'
                     ], 201);

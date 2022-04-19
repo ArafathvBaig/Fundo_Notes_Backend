@@ -57,6 +57,7 @@ class ForgotPasswordController extends Controller
         $user = User::getUserByEmail($email);
 
         if (!$user) {
+            Log::info('Not a Registered Email');
             return response()->json([
                 'message' => "Not a Registered Email"
             ], 404);
@@ -67,10 +68,12 @@ class ForgotPasswordController extends Controller
             $mail = new Mailer();
             $check = $mail->sendEmail($user, $token);
             if (!$check) {
+                Log::info('Email Not Sent');
                 return response()->json([
                     'message' => 'Email Not Sent'
                 ], 424);
             } else {
+                Log::info('Reset Password Token Sent to your Email');
                 return response()->json([
                     'message' => 'Reset Password Token Sent to your Email',
                 ], 200);

@@ -64,6 +64,7 @@ class NoteController extends Controller
             $user = JWTAuth::parseToken()->authenticate();
 
             if (!$user) {
+                Log::error('Invalid Authorization Token');
                 return response()->json([
                     'message' => 'Invalid Authorization Token'
                 ], 401);
@@ -73,6 +74,80 @@ class NoteController extends Controller
                 return response()->json([
                     'message' => 'Notes Created Successfully'
                 ], 201);
+            }
+        } catch (JWTException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *   path="/api/createNoteWithLabel",
+     *   summary="Create Note and label",
+     *   description="Create Notes for User and add label to note",
+     *   @OA\RequestBody(
+     *         @OA\JsonContent(),
+     *         @OA\MediaType(
+     *            mediaType="multipart/form-data",
+     *            @OA\Schema(
+     *               type="object",
+     *               required={"title","description"},
+     *               @OA\Property(property="title", type="string"),
+     *               @OA\Property(property="description", type="string"),  
+     *               @OA\Property(property="label_id", type="integer"),  
+     *            ),
+     *        ),
+     *    ),
+     *   @OA\Response(response=201, description="Notes Created Successfully and Added Label"),
+     *   @OA\Response(response=401, description="Invalid Authorization Token"),
+     *   @OA\Response(response=404, description="Label Not Found"),
+     *   security={
+     *       {"Bearer": {}}
+     *     }
+     * )
+     * Takes User authorization token and checks if it is authorised or not
+     * If authorised, get user Id and
+     * and create the Note Successfully
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function createNoteWithLabel(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'title' => 'required|string|min:3|max:30',
+                'description' => 'required|string|min:3|max:1000',
+                'label_id' => 'required|integer'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json($validator->errors(), 400);
+            }
+
+            $user = JWTAuth::parseToken()->authenticate();
+
+            if (!$user) {
+                Log::error('Invalid Authorization Token');
+                return response()->json([
+                    'message' => 'Invalid Authorization Token'
+                ], 401);
+            } else {
+                $label = Label::where('user_id', $user->id)->where('id', $request->label_id)->first();
+                if (!$label) {
+                    Log::error('Label Not Found');
+                    return response()->json([
+                        'message' => 'Label Not Found'
+                    ], 404);
+                } else {
+                    $note_id = Note::createNote($request, $user->id);
+                    LabelNotes::createNoteandLabel($note_id, $request->label_id, $user->id);
+                    Log::info('Notes Created Successfully For User::' . $user->id);
+                    return response()->json([
+                        'message' => 'Notes Created Successfully and Added Label'
+                    ], 201);
+                }
             }
         } catch (JWTException $exception) {
             return response()->json([
@@ -117,10 +192,12 @@ class NoteController extends Controller
         }
         $notes = Note::getNoteByNoteId($request->id);
         if (!$notes) {
+            Log::error('Notes Not Found');
             return response()->json([
                 'message' => 'Notes Not Found'
             ], 404);
         } else {
+            Log::info('Notes Fetched Successfully');
             return response()->json([
                 'message' => 'Notes Fetched Successfully',
                 'Notes' => $notes
@@ -152,16 +229,69 @@ class NoteController extends Controller
         try {
             $currentUser = JWTAuth::parseToken()->authenticate();
             if (!$currentUser) {
+                Log::error('Invalid Authorization Token');
                 return response()->json([
                     'message' => 'Invalid Authorization Token'
                 ], 401);
             } else {
                 $notes = Note::getNotesByUserId($currentUser->id);
                 if (!$notes) {
+                    Log::error('Notes Not Found');
                     return response()->json([
                         'message' => 'Notes Not Found'
                     ], 404);
                 } else {
+                    Log::info('All Notes are Fetched Successfully for User:: ' . $currentUser->id);
+                    return response()->json([
+                        'message' => 'All Notes are Fetched Successfully',
+                        'Notes' => $notes
+                    ], 200);
+                }
+            }
+        } catch (JWTException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * @OA\Get(
+     * path="/api/displayNotesandItsLabels",
+     * summary="Display Notes of a User and Labels of a note",
+     * description="Display Notes of an User and Labels of that note",
+     * @OA\RequestBody(),
+     *   @OA\Response(response=200, description="All Notes are Fetched Successfully"),
+     *   @OA\Response(response=404, description="Notes Not Found"),
+     *   @OA\Response(response=401, description="Invalid Authorization Token"),
+     *   security={
+     *       {"Bearer": {}}
+     *   }
+     * )
+     * This function takes authorization token and finds
+     * if there is any note existing on that User id and Labels of that notes
+     * if exists, it successfully fetch the notes and its labels and print
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function displayNotesandItsLabels(Request $request)
+    {
+        try {
+            $currentUser = JWTAuth::parseToken()->authenticate();
+            if (!$currentUser) {
+                Log::error('Invalid Authorization Token');
+                return response()->json([
+                    'message' => 'Invalid Authorization Token'
+                ], 401);
+            } else {
+                $notes = Note::getNotesandItsLabels($currentUser);
+                if (!$notes) {
+                    Log::error('Notes Not Found');
+                    return response()->json([
+                        'message' => 'Notes Not Found'
+                    ], 404);
+                } else {
+                    Log::info('All Notes are Fetched Successfully for User:: ' . $currentUser->id);
                     return response()->json([
                         'message' => 'All Notes are Fetched Successfully',
                         'Notes' => $notes
@@ -224,17 +354,20 @@ class NoteController extends Controller
             $currentUser = JWTAuth::parseToken()->authenticate();
 
             if (!$currentUser) {
+                Log::error('Invalid Authorization Token');
                 return response()->json([
                     'message' => 'Invalid Authorization Token'
                 ], 401);
             } else {
                 $notes = Note::getNotesByNoteIdandUserId($id, $currentUser->id);
                 if (!$notes) {
+                    Log::error('Notes Not Found');
                     return response()->json([
                         'message' => 'Notes Not Found'
                     ], 404);
                 } else {
                     $notes = Note::updateNote($notes, $request, $currentUser->id);
+                    Log::info('Notes Updated Successfully');
                     if ($notes) {
                         return response()->json([
                             'message' => 'Note Updated Successfully'
@@ -294,16 +427,19 @@ class NoteController extends Controller
             $currentUser = JWTAuth::parseToken()->authenticate();
 
             if (!$currentUser) {
+                Log::error('Invalid Authorization Token');
                 return response()->json([
                     'message' => 'Invalid Authorization Token'
                 ], 401);
             } else {
                 $notes = Note::getNotesByNoteIdandUserId($id, $currentUser->id);
                 if (!$notes) {
+                    Log::error('Notes Not Found');
                     return response()->json([
                         'message' => 'Notes Not Found'
                     ], 404);
                 } else {
+                    Log::info('Note Deleted Successfully');
                     if ($notes->delete()) {
                         return response()->json([
                             'message' => 'Note Deleted Successfully'
@@ -365,6 +501,7 @@ class NoteController extends Controller
             $user = JWTAuth::parseToken()->authenticate();
 
             if (!$user) {
+                Log::error('Invalid Authorization Token');
                 return response()->json([
                     'message' => 'Invalid Authorization Token'
                 ], 401);
@@ -372,17 +509,20 @@ class NoteController extends Controller
                 $notes = Note::getNotesByNoteIdandUserId($request->note_id, $user->id);
                 $label = Label::getLabelByLabelIdandUserId($request->label_id, $user->id);
                 if (!$notes || !$label) {
+                    Log::error('Note or Label Not Found');
                     return response()->json([
                         'message' => 'Note or Label Not Found'
                     ], 404);
                 } else {
                     $labelnote = LabelNotes::getLabelNotesbyLabelIdNoteIdandUserId($request, $user->id);
+                    Log::info('Note Already Have This Label');
                     if ($labelnote) {
                         return response()->json([
                             'message' => 'Note Already Have This Label'
                         ], 409);
                     } else {
                         LabelNotes::createNoteLabel($request, $user->id);
+                        Log::info('LabelNote Added Successfully');
                         return response()->json([
                             'message' => 'LabelNote Added Successfully'
                         ], 201);
@@ -442,6 +582,7 @@ class NoteController extends Controller
             $user = JWTAuth::parseToken()->authenticate();
 
             if (!$user) {
+                Log::error('Invalid Authorization Token');
                 return response()->json([
                     'status' => 401,
                     'message' => 'Invalid Authorization Token'
@@ -449,11 +590,13 @@ class NoteController extends Controller
             } else {
                 $labelnote = LabelNotes::getLabelNotesbyLabelIdNoteIdandUserId($request, $user->id);
                 if (!$labelnote) {
+                    Log::error('LabelNotes Not Found With These Credentials');
                     return response()->json([
                         'message' => 'LabelNotes Not Found With These Credentials'
                     ], 404);
                 } else {
                     $labelnote->delete($labelnote->id);
+                    Log::info('Label Note Successfully Deleted');
                     return response()->json([
                         'status' => 201,
                         'message' => 'Label Note Successfully Deleted'
@@ -469,6 +612,7 @@ class NoteController extends Controller
 
     /**
      * Pin Note By ID
+     * Pin Note using Note_id and Authorization token
      * 
      * @return \Illuminate\Http\JsonResponse
      */
@@ -484,23 +628,31 @@ class NoteController extends Controller
 
             $currentUser = JWTAuth::parseToken()->authenticate();
             if (!$currentUser) {
+                Log::error('Invalid Authorization Token');
                 return response()->json([
                     'message' => 'Invalid Authorization Token'
                 ], 401);
             } else {
                 $note = Note::where('id', $request->id)->where('user_id', $currentUser->id)->first();
                 if (!$note) {
+                    Log::error('Notes Not Found');
                     return response()->json([
                         'message' => 'Notes Not Found'
                     ], 404);
                 } else {
                     if ($note->pin == 0) {
+                        if ($note->archive == 1) {
+                            $note->archive = 0;
+                            $note->save();
+                        }
                         $note->pin = 1;
                         $note->save();
+                        Log::info('Note Pinned Successfully');
                         return response()->json([
                             'message' => 'Note Pinned Successfully'
                         ], 201);
                     } else {
+                        Log::info('Note Already Pinned');
                         return response()->json([
                             'message' => 'Note Already Pinned'
                         ], 409);
@@ -516,6 +668,7 @@ class NoteController extends Controller
 
     /**
      * Archive Note By ID
+     * Archive Note using Note_Id and Authorization token
      * 
      * @return \Illuminate\Http\JsonResponse
      */
@@ -531,11 +684,13 @@ class NoteController extends Controller
 
             $currentUser = JWTAuth::parseToken()->authenticate();
             if (!$currentUser) {
+                Log::error('Invalid Authorization Token');
                 return response()->json([
                     'message' => 'Invalid Authorization Token'
                 ], 401);
             } else {
                 $note = Note::where('id', $request->id)->where('user_id', $currentUser->id)->first();
+                Log::error('Notes Not found');
                 if (!$note) {
                     return response()->json([
                         'message' => 'Notes Not Found'
@@ -544,10 +699,12 @@ class NoteController extends Controller
                     if ($note->archive == 0) {
                         $note->archive = 1;
                         $note->save();
+                        Log::info('Note Archived Successfully');
                         return response()->json([
                             'message' => 'Note Archived Successfully'
                         ], 201);
                     } else {
+                        Log::info('Note Already Archived');
                         return response()->json([
                             'message' => 'Note Already Archived'
                         ], 409);

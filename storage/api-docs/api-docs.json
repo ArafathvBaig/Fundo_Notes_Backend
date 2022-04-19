@@ -253,103 +253,6 @@
                 ]
             }
         },
-        "/api/addNoteLabel": {
-            "post": {
-                "summary": "Add Note Label",
-                "description": "Add Label to the Note",
-                "operationId": "06e608d2327abb2167dbf140d2303b87",
-                "requestBody": {
-                    "content": {
-                        "multipart/form-data": {
-                            "schema": {
-                                "required": [
-                                    "label_id",
-                                    "note_id"
-                                ],
-                                "properties": {
-                                    "label_id": {
-                                        "type": "integer"
-                                    },
-                                    "note_id": {
-                                        "type": "integer"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        },
-                        "application/json": {
-                            "schema": {}
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "LabelNote Added Successfully"
-                    },
-                    "409": {
-                        "description": "Note Already Have This Label"
-                    },
-                    "404": {
-                        "description": "Note or Label Not Found"
-                    },
-                    "401": {
-                        "description": "Invalid Authorization Token"
-                    }
-                },
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ]
-            }
-        },
-        "/api/deleteNoteLabel": {
-            "post": {
-                "summary": "Delete Note Label",
-                "description": "Delete the Label of a Note",
-                "operationId": "c7a6bfd0cf0383848c2219363be97132",
-                "requestBody": {
-                    "content": {
-                        "multipart/form-data": {
-                            "schema": {
-                                "required": [
-                                    "label_id",
-                                    "note_id"
-                                ],
-                                "properties": {
-                                    "label_id": {
-                                        "type": "integer"
-                                    },
-                                    "note_id": {
-                                        "type": "integer"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        },
-                        "application/json": {
-                            "schema": {}
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Label Note Successfully Deleted"
-                    },
-                    "404": {
-                        "description": "LabelNotes Not Found With These Credentials"
-                    },
-                    "401": {
-                        "description": "Invalid Authorization Token"
-                    }
-                },
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ]
-            }
-        },
         "/api/createNote": {
             "post": {
                 "summary": "Create Note",
@@ -385,6 +288,56 @@
                     },
                     "401": {
                         "description": "Invalid Authorization Token"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/createNoteWithLabel": {
+            "post": {
+                "summary": "Create Note and label",
+                "description": "Create Notes for User and add label to note",
+                "operationId": "846abce75c4f0544f2b83748bcff80c2",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "title",
+                                    "description"
+                                ],
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "label_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Notes Created Successfully and Added Label"
+                    },
+                    "401": {
+                        "description": "Invalid Authorization Token"
+                    },
+                    "404": {
+                        "description": "Label Not Found"
                     }
                 },
                 "security": [
@@ -434,6 +387,30 @@
                 "summary": "Display Notes of a User",
                 "description": "Display Notes of an User",
                 "operationId": "7f27ba00e5a31af2974bee64da5b1a2e",
+                "requestBody": {},
+                "responses": {
+                    "200": {
+                        "description": "All Notes are Fetched Successfully"
+                    },
+                    "404": {
+                        "description": "Notes Not Found"
+                    },
+                    "401": {
+                        "description": "Invalid Authorization Token"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/displayNotesandItsLabels": {
+            "get": {
+                "summary": "Display Notes of a User and Labels of a note",
+                "description": "Display Notes of an User and Labels of that note",
+                "operationId": "9d7c37383bd09f0aff19356da727a9e2",
                 "requestBody": {},
                 "responses": {
                     "200": {
@@ -535,6 +512,103 @@
                     },
                     "404": {
                         "description": "Notes Not Found"
+                    },
+                    "401": {
+                        "description": "Invalid Authorization Token"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/addNoteLabel": {
+            "post": {
+                "summary": "Add Note Label",
+                "description": "Add Label to the Note",
+                "operationId": "38fa105a82f7c3e3eeac4714f589438c",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "label_id",
+                                    "note_id"
+                                ],
+                                "properties": {
+                                    "label_id": {
+                                        "type": "integer"
+                                    },
+                                    "note_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "LabelNote Added Successfully"
+                    },
+                    "409": {
+                        "description": "Note Already Have This Label"
+                    },
+                    "404": {
+                        "description": "Note or Label Not Found"
+                    },
+                    "401": {
+                        "description": "Invalid Authorization Token"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
+        "/api/deleteNoteLabel": {
+            "post": {
+                "summary": "Delete Note Label",
+                "description": "Delete the Label of a Note",
+                "operationId": "2e1cbcad6ba70d6abddeb28ca1b67aba",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "label_id",
+                                    "note_id"
+                                ],
+                                "properties": {
+                                    "label_id": {
+                                        "type": "integer"
+                                    },
+                                    "note_id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Label Note Successfully Deleted"
+                    },
+                    "404": {
+                        "description": "LabelNotes Not Found With These Credentials"
                     },
                     "401": {
                         "description": "Invalid Authorization Token"

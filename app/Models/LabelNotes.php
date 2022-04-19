@@ -40,6 +40,19 @@ class LabelNotes extends Model
         ]);
     }
 
+    /**
+     * Function to create a NoteLabel
+     * Passing the note_id, label_id and user_id as parameters
+     */
+    public static function createNoteandLabel($note_id, $label_id, $user_id)
+    {
+        $labelnotes = LabelNotes::create([
+            'user_id' => $user_id,
+            'note_id' => $note_id,
+            'label_id' => $label_id
+        ]);
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

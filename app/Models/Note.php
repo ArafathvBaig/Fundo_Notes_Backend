@@ -17,6 +17,8 @@ class Note extends Model
     /**
      * Create a new Note with the given attributes
      * for the user id given
+     * 
+     * @return mixed
      */
     public static function createNote($request, $user_id)
     {
@@ -25,6 +27,7 @@ class Note extends Model
         $note->description = $request->description;
         $note->user_id = $user_id;
         $note->save();
+        return $note->id;
 
         // $note = Note::create([
         //     'title' => $request->title,
@@ -76,12 +79,28 @@ class Note extends Model
      * 
      * @return mixed
      */
-    public static function updateNote($notes, $request, $user_id){
+    public static function updateNote($notes, $request, $user_id)
+    {
         //$notes->id = $request->id;
         $notes->user_id = $user_id;
         $notes->title = $request->title;
         $notes->description = $request->description;
         return $notes->update();
+    }
+
+    /**
+     * Function to get the notes and their labels
+     * Passing the user as a parameter
+     * 
+     * @return array
+     */
+    public static function getNotesandItsLabels($user)
+    {
+        $notes = Note::leftJoin('label_notes', 'label_notes.note_id', '=', 'notes.id')
+            ->leftJoin('labels', 'labels.id', '=', 'label_notes.label_id')
+            ->select('notes.id', 'notes.title', 'notes.description', 'notes.pin', 'notes.archive', 'labels.labelname')
+            ->where('notes.user_id', $user->id)->get();
+        return $notes;
     }
 
     public function user()

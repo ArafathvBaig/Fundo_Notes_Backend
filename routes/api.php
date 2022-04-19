@@ -32,8 +32,10 @@ Route::group(['middleware' => 'api'], function () {
     Route::post('resetPassword', [ForgotPasswordController::class, 'resetPassword']);
 
     Route::post('createNote', [NoteController::class, 'createNote']);
+    Route::post('createNoteWithLabel', [NoteController::class, 'createNoteWithLabel']);
     Route::get('displayNoteById', [NoteController::class, 'displayNoteById']);
     Route::get('displayNotes', [NoteController::class, 'displayAllNotes']);
+    Route::get('displayNotesandItsLabels', [NoteController::class, 'displayNotesandItsLabels']);
     Route::post('updateNoteById', [NoteController::class, 'updateNoteById']);
     Route::post('deleteNoteById', [NoteController::class, 'deleteNoteById']);
     Route::post('addNoteLabel', [NoteController::class, 'addNoteLabel']);
@@ -41,7 +43,6 @@ Route::group(['middleware' => 'api'], function () {
     Route::post('pinNoteById', [NoteController::class, 'pinNoteById']);
     Route::post('archiveNoteById', [NoteController::class, 'archiveNoteById']);
     Route::post('colorNoteById', [NoteController::class, 'colorNoteById']);
-
     Route::post('createLabel', [LabelController::class, 'createLabel']);
     Route::get('readAllLabels', [LabelController::class, 'readAllLabels']);
     Route::post('updateLabel', [LabelController::class, 'updateLabel']);
