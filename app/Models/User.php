@@ -81,6 +81,30 @@ class User extends Authenticatable implements JWTSubject
         return $user;
     }
 
+    /**
+     * Function to get user details by email
+     * Passing the email as parameter
+     * 
+     * @return array
+     */
+    public static function getUserByEmail($email){
+        $user = User::where('email', $email)->first();
+        return $user;
+    }
+
+    /**
+     * Function to Update the password with new password
+     * Passing the User and the new_password as parameters
+     * 
+     * @return array
+     */
+    public static function updatePassword($user, $new_password)
+    {
+        $user->password = bcrypt($new_password);
+        $user->save();
+        return $user;
+    }
+
     public function notes()
     {
         return $this->hasMany('App\Models\Note');

@@ -397,8 +397,43 @@
         "/api/displayNoteById": {
             "get": {
                 "summary": "Display Note",
-                "description": "Display Notes For an User",
+                "description": "Display Notes for a particular ID",
                 "operationId": "2c0e140bd8bdc84ff5c310dc3c265b02",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "id"
+                                ],
+                                "properties": {
+                                    "id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Notes Fetched Successfully"
+                    },
+                    "404": {
+                        "description": "Notes Not Found"
+                    }
+                }
+            }
+        },
+        "/api/displayAllNotes": {
+            "get": {
+                "summary": "Display Notes of a User",
+                "description": "Display Notes of an User",
+                "operationId": "7f27ba00e5a31af2974bee64da5b1a2e",
                 "requestBody": {},
                 "responses": {
                     "200": {

@@ -11,6 +11,8 @@ class UserControllerTest extends TestCase
     /**
      * Successfull Registration
      * This test is to check user Registered Successfully or not
+     * by using first_name, last_name, email and password as credentials
+     * 
      * @test
      */
     public function successfulRegistrationTest()
@@ -21,15 +23,18 @@ class UserControllerTest extends TestCase
             ->json('POST', '/api/register', [
                 "first_name" => "Arafath",
                 "last_name" => "Baig",
-                "email" => "arafathbaig1@gamil.com",
-                "password" => "abcdefghij1",
-                "password_confirmation" => "abcdefghij1"
+                "email" => "arafath@gamil.com",
+                "password" => "arafath",
+                "password_confirmation" => "arafath"
             ]);
         $response->assertStatus(201)->assertJson(['message' => 'User Successfully Registered']);
     }
 
     /**
      * Test to check the user is already registered
+     * by using first_name, last_name, email and password as credentials
+     * The email used is a registered email for this test
+     * 
      * @test
      */
     public function userisAlreadyRegisteredTest()
@@ -49,6 +54,8 @@ class UserControllerTest extends TestCase
 
     /**
      * Test for successful Login
+     * Login the user by using the email and password as credentials
+     * 
      * @test
      */
 
@@ -67,6 +74,9 @@ class UserControllerTest extends TestCase
 
     /**
      * Test for Unsuccessfull Login
+     * Login the user by email and password
+     * Wrong password for this test
+     * 
      * @test
      */
 
@@ -85,6 +95,8 @@ class UserControllerTest extends TestCase
 
     /**
      * Test for Successfull Forgot Password
+     * Send a mail for forgot password of a registered user
+     * 
      * @test
      */
     public function successfulForgotPasswordTest()
@@ -101,6 +113,9 @@ class UserControllerTest extends TestCase
 
     /**
      * Test for UnSuccessfull Forgot Password
+     * Send a mail for forgot password of a registered user
+     * Non-Registered email for this test
+     * 
      * @test
      */
     public function unsuccessfulForgotPasswordTest()
@@ -117,6 +132,9 @@ class UserControllerTest extends TestCase
 
     /**
      * Test for Successfull Reset Password
+     * Reset password using the token and 
+     * setting the new password to be the password
+     * 
      * @test
      */
     public function successfulResetPasswordTest()
@@ -135,6 +153,10 @@ class UserControllerTest extends TestCase
 
     /**
      * Test for unSuccessfull Reset Password
+     * Reset password using the token and 
+     * setting the new password to be the password
+     * Wrong token is passed for this test
+     * 
      * @test
      */
     public function unsuccessfulResetPasswordTest()
@@ -153,6 +175,8 @@ class UserControllerTest extends TestCase
 
     /**
      * Test for Successfull Logout
+     * Logout a user using the token generated at login
+     * 
      * @test
      */
     public function successfulLogoutTest()
@@ -166,9 +190,12 @@ class UserControllerTest extends TestCase
             $response->assertStatus(201)->assertJson(['message' => 'User Successfully Logged Out']);
         }
     }
-    
+
     /**
      * Test for unSuccessfull Logout
+     * Logout a user using the token generated at login
+     * Passing the wrong token for this test
+     * 
      * @test
      */
     public function unsuccessfulLogoutTest()

@@ -16,6 +16,8 @@ class LabelControllerTest extends TestCase
 
     /**
      * Successful Create Label Test
+     * Create a label using label_name and authorization token for a user
+     * 
      * @test
      */
     public function successfulCreateLabelTest()
@@ -32,6 +34,9 @@ class LabelControllerTest extends TestCase
 
     /**
      * UnSuccessful Create Label Test
+     * Create a label using label_name and authorization token for a user
+     * Using existing label name for this test
+     * 
      * @test
      */
     public function unSuccessfulCreateLabelTest()
@@ -49,6 +54,8 @@ class LabelControllerTest extends TestCase
 
     /**
      * Successful Update Label Test
+     * Update label using label_id, label_name and authorization
+     * 
      * @test
      */
     public function successfulUpdateLabelTest()
@@ -66,6 +73,9 @@ class LabelControllerTest extends TestCase
 
     /**
      * UnSuccessful Update Label Test
+     * Update label using label_id, label_name and authorization
+     * Using existing label name for this test
+     * 
      * @test
      */
     public function unSuccessfulUpdateLabelTest()
@@ -83,6 +93,7 @@ class LabelControllerTest extends TestCase
 
     /**
      * Successful Delete Label Test
+     * Delete Label using label_id and authorization token
      * @test
      */
     public function successfulDeleteLabelTest()
@@ -99,6 +110,9 @@ class LabelControllerTest extends TestCase
 
     /**
      * UnSuccessful Delete Label Test
+     * Delete Label using label_id and authorization token
+     * Giving wrong label_id for this test
+     * 
      * @test
      */
     public function unSuccessfulDeleteLabelTest()
@@ -111,73 +125,5 @@ class LabelControllerTest extends TestCase
                 "token" => self::$token
             ]);
         $response->assertStatus(404)->assertJson(['message' => 'Label Not Found']);
-    }
-
-    /**
-     * Successful Add NoteLabel Test
-     * @test
-     */
-    public function successfulAddNoteLabelTest()
-    {
-        $response = $this->withHeaders([
-            'Content-Type' => 'Application/json',
-        ])
-            ->json('POST', '/api/addNoteLabel', [
-                'label_id' => '1',
-                'note_id' => '10',
-                "token" => self::$token
-            ]);
-        $response->assertStatus(201)->assertJson(['message' => 'LabelNote Added Successfully']);
-    }
-
-    /**
-     * UnSuccessful Add NoteLabel Test
-     * @test
-     */
-    public function unSuccessfulAddNoteLabelTest()
-    {
-        $response = $this->withHeaders([
-            'Content-Type' => 'Application/json',
-        ])
-            ->json('POST', '/api/addNoteLabel', [
-                'label_id' => '1',
-                'note_id' => '10',
-                "token" => self::$token
-            ]);
-        $response->assertStatus(409)->assertJson(['message' => 'Note Already Have This Label']);
-    }
-
-    /**
-     * Successful Delete NoteLabel Test
-     * @test
-     */
-    public function successfulDeleteNoteLabelTest()
-    {
-        $response = $this->withHeaders([
-            'Content-Type' => 'Application/json',
-        ])
-            ->json('POST', '/api/deleteNoteLabel', [
-                'label_id' => '1',
-                'note_id' => '10',
-                "token" => self::$token
-            ]);
-        $response->assertStatus(201)->assertJson(['message' => 'Label Note Successfully Deleted']);
-    }
-
-    /**
-     * UnSuccessful Delete NoteLabel Test
-     * @test
-     */
-    public function unSuccessfulDeleteNoteLabelTest()
-    {
-        $response = $this->withHeaders([
-            'Content-Type' => 'Application/json',
-        ])
-            ->json('POST', '/api/deleteNoteLabel', [
-                'label_id' => '1',
-                'note_id' => '10',
-                "token" => self::$token
-            ]);
-        $response->assertStatus(404)->assertJson(['message' => 'LabelNotes Not Found With These Credentials']);
     }
 }

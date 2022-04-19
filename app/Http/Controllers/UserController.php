@@ -37,7 +37,8 @@ class UserController extends Controller
      *  @OA\Response(response=201, description="User Successfully Registered")
      * )
      * 
-     * Register New User
+     * This Function take first_name, last_name, email and password
+     * to register a new user into the database
      * 
      * @return \Illuminate\Http\JsonResponse
      */
@@ -48,7 +49,7 @@ class UserController extends Controller
             'first_name' => 'required|string|min:3',
             'last_name' => 'required|string|min:3',
             'email' => 'required|email|unique:users',
-            'password' => 'required|string|min:6|max:15',
+            'password' => 'required|string|min:6|max:50',
             'password_confirmation' => 'required|same:password'
         ]);
 
@@ -94,7 +95,9 @@ class UserController extends Controller
      *  @OA\Response(response=201, description="Login Successful")
      * )
      * 
-     * login user
+     * This Function takes user registered email and password and
+     * checks the password is correct or not and login the user and
+     * give a login token in the response
      * 
      * @return \Illuminate\Http\JsonResponse
      */
@@ -105,7 +108,7 @@ class UserController extends Controller
         //valid credential
         $validator = Validator::make($credentials, [
             'email' => 'required|email',
-            'password' => 'required|string|min:6|max:15'
+            'password' => 'required|string|min:6|max:50'
         ]);
 
         //Send failed response if request is not valid
@@ -115,7 +118,7 @@ class UserController extends Controller
 
         //Request is validated
         //Create token
-        $user = User::where('email', $request->email)->first();
+        $user = User::getUserByEmail($request->email);
         try {
             if (!$user) {
                 Log::error('Not a Registered Email');
@@ -158,7 +161,8 @@ class UserController extends Controller
      *       {"Bearer": {}}
      *     }
      * )
-     * Logout User
+     * This Function takes user authorization token and 
+     * logout the user
      *
      * @return \Illuminate\Http\JsonResponse
      */

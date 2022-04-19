@@ -35,7 +35,8 @@ class ForgotPasswordController extends Controller
      *  @OA\Response(response=200, description="Reset Password Token Sent to your Email")
      * )
      * 
-     * Forgot Password
+     * This Function takes user authorization token and email and
+     * send a forgot password mail to that user having the token to reset password
      * 
      * @return \Illuminate\Http\JsonResponse
      */
@@ -53,7 +54,7 @@ class ForgotPasswordController extends Controller
             return response()->json(['error' => $validator->errors()], 200);
         }
 
-        $user = User::where('email', $email)->first();
+        $user = User::getUserByEmail($email);
 
         if (!$user) {
             return response()->json([
@@ -101,7 +102,8 @@ class ForgotPasswordController extends Controller
      *  }
      * )
      * 
-     * Reset User Password
+     * This function takes user authorization token and reset the password
+     * with the new password and update the new password of user
      * 
      * @return \Illuminate\Http\JsonResponse
      */
@@ -110,7 +112,7 @@ class ForgotPasswordController extends Controller
         try {
             //validate all credentials
             $validator = Validator::make($request->all(), [
-                'new_password' => 'required|string|min:6|max:15',
+                'new_password' => 'required|string|min:6|max:50',
                 'password_confirmation' => 'required|same:new_password'
             ]);
 
@@ -126,9 +128,7 @@ class ForgotPasswordController extends Controller
                     'message' => "User Not Found With This Email"
                 ], 400);
             } else {
-                $user = User::where('email', $user->email)->first();
-                $user->password = bcrypt($request->new_password);
-                $user->save();
+                $user = User::updatePassword($user, $request->new_password);
                 Log::info('Reset Successful: Email Id: ' . $user->email);
                 return response()->json([
                     'message' => 'Password Reset Successful'

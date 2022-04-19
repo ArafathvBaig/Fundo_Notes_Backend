@@ -33,15 +33,19 @@ Route::group(['middleware' => 'api'], function () {
 
     Route::post('createNote', [NoteController::class, 'createNote']);
     Route::get('displayNoteById', [NoteController::class, 'displayNoteById']);
+    Route::get('displayNotes', [NoteController::class, 'displayAllNotes']);
     Route::post('updateNoteById', [NoteController::class, 'updateNoteById']);
     Route::post('deleteNoteById', [NoteController::class, 'deleteNoteById']);
+    Route::post('addNoteLabel', [NoteController::class, 'addNoteLabel']);
+    Route::post('deleteNoteLabel', [NoteController::class, 'deleteNoteLabel']);
+    Route::post('pinNoteById', [NoteController::class, 'pinNoteById']);
+    Route::post('archiveNoteById', [NoteController::class, 'archiveNoteById']);
+    Route::post('colorNoteById', [NoteController::class, 'colorNoteById']);
 
     Route::post('createLabel', [LabelController::class, 'createLabel']);
     Route::get('readAllLabels', [LabelController::class, 'readAllLabels']);
     Route::post('updateLabel', [LabelController::class, 'updateLabel']);
     Route::post('deleteLabel', [LabelController::class, 'deleteLabel']);
-    Route::post('addNoteLabel', [LabelController::class, 'addNoteLabel']);
-    Route::post('deleteNoteLabel', [LabelController::class, 'deleteNoteLabel']);
 });
 
 Route::group(['middleware' => ['jwt.verify']], function () {
