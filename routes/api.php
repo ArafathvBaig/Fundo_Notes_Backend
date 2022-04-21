@@ -32,7 +32,7 @@ Route::group(['middleware' => 'api'], function () {
     Route::post('resetPassword', [ForgotPasswordController::class, 'resetPassword']);
 
     Route::post('createNote', [NoteController::class, 'createNote']);
-    Route::post('createNoteWithLabel', [NoteController::class, 'createNoteWithLabel']);
+    Route::post('createNotes', [NoteController::class, 'createNotes']);
     Route::get('displayNoteById', [NoteController::class, 'displayNoteById']);
     Route::get('displayNotes', [NoteController::class, 'displayAllNotes']);
     Route::get('displayNotesandItsLabels', [NoteController::class, 'displayNotesandItsLabels']);

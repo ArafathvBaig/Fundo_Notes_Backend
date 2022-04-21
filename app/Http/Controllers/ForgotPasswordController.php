@@ -32,7 +32,7 @@ class ForgotPasswordController extends Controller
      *  ),
      *  @OA\Response(response=404, description="Not a Registered Email"),
      *  @OA\Response(response=424, description="Email Not Sent"),
-     *  @OA\Response(response=200, description="Reset Password Token Sent to your Email")
+     *  @OA\Response(response=201, description="Reset Password Token Sent to your Email")
      * )
      * 
      * This Function takes user authorization token and email and
@@ -42,42 +42,44 @@ class ForgotPasswordController extends Controller
      */
     public function forgotPassword(Request $request)
     {
-        $email = $request->only('email');
+        try {
+            $email = $request->only('email');
 
-        //validate email
-        $validator = Validator::make($email, [
-            'email' => 'required|email'
-        ]);
+            //validate email
+            $validator = Validator::make($email, [
+                'email' => 'required|email'
+            ]);
 
-        //Send failed response if request is not valid
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 200);
-        }
-
-        $user = User::getUserByEmail($email);
-
-        if (!$user) {
-            Log::info('Not a Registered Email');
-            return response()->json([
-                'message' => "Not a Registered Email"
-            ], 404);
-        }
-
-        $token = JWTAuth::fromUser($user);
-        if ($user) {
-            $mail = new Mailer();
-            $check = $mail->sendEmail($user, $token);
-            if (!$check) {
-                Log::info('Email Not Sent');
-                return response()->json([
-                    'message' => 'Email Not Sent'
-                ], 424);
-            } else {
-                Log::info('Reset Password Token Sent to your Email');
-                return response()->json([
-                    'message' => 'Reset Password Token Sent to your Email',
-                ], 200);
+            //Send failed response if request is not valid
+            if ($validator->fails()) {
+                return response()->json(['error' => $validator->errors()], 400);
             }
+
+            $user = User::getUserByEmail($email);
+
+            if (!$user) {
+                Log::info('Not a Registered Email');
+                throw new FundoNotesException('Not a Registered Email', 404);
+            }
+
+            $token = JWTAuth::fromUser($user);
+            if ($user) {
+                $mail = new Mailer();
+                $check = $mail->sendEmail($user, $token);
+                if (!$check) {
+                    Log::info('Email Not Sent');
+                    throw new FundoNotesException('Email Not Sent', 424);
+                } else {
+                    Log::info('Reset Password Token Sent to your Email');
+                    return response()->json([
+                        'message' => 'Reset Password Token Sent to your Email',
+                    ], 201);
+                }
+            }
+        } catch (FundoNotesException $exception) {
+            return response()->json([
+                'message' => $exception->message()
+            ], $exception->statusCode());
         }
     }
 
@@ -98,7 +100,7 @@ class ForgotPasswordController extends Controller
      *          ),  
      *      ),
      *  ),
-     *  @OA\Response(response=400, description="User Not found with this Email"),
+     *  @OA\Response(response=401, description="Invalid Authorization Token"),
      *  @OA\Response(response=201, description="Password Reset Successful"),
      *  security={
      *      {"Bearer": {}}
@@ -121,15 +123,13 @@ class ForgotPasswordController extends Controller
 
             //Send failed response if request is not valid
             if ($validator->fails()) {
-                return response()->json(['error' => $validator->errors()], 200);
+                return response()->json(['error' => $validator->errors()], 400);
             }
 
             $user = JWTAuth::parseToken()->authenticate();
             if (!$user) {
-                Log::error('User Not Found With This Email');
-                return response()->json([
-                    'message' => "User Not Found With This Email"
-                ], 400);
+                Log::error('Invalid Authorization Token');
+                throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
                 $user = User::updatePassword($user, $request->new_password);
                 Log::info('Reset Successful: Email Id: ' . $user->email);
@@ -137,10 +137,10 @@ class ForgotPasswordController extends Controller
                     'message' => 'Password Reset Successful'
                 ], 201);
             }
-        } catch (JWTException $exception) {
+        } catch (FundoNotesException $exception) {
             return response()->json([
-                'message' => $exception->getMessage()
-            ], 400);
+                'message' => $exception->message()
+            ], $exception->statusCode());
         }
     }
 }

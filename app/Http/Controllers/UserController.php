@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\FundoNotesException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -34,7 +35,8 @@ class UserController extends Controller
      *          ),  
      *      ),
      *  ),
-     *  @OA\Response(response=201, description="User Successfully Registered")
+     *  @OA\Response(response=201, description="User Successfully Registered"),
+     *  @OA\Response(response=401, description="The email has already been taken.")
      * )
      * 
      * This Function take first_name, last_name, email and password
@@ -44,32 +46,36 @@ class UserController extends Controller
      */
     public function register(Request $request)
     {
-        $data = $request->only('first_name', 'last_name', 'email', 'password', 'password_confirmation');
-        $validator = Validator::make($data, [
-            'first_name' => 'required|string|min:3',
-            'last_name' => 'required|string|min:3',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|string|min:6|max:50',
-            'password_confirmation' => 'required|same:password'
-        ]);
+        try {
+            $data = $request->only('first_name', 'last_name', 'email', 'password', 'password_confirmation');
+            $validator = Validator::make($data, [
+                'first_name' => 'required|string|min:3',
+                'last_name' => 'required|string|min:3',
+                'email' => 'required|email|unique:users',
+                'password' => 'required|string|min:6|max:50',
+                'password_confirmation' => 'required|same:password'
+            ]);
 
-        $user = User::where('email', $request->email)->first();
-        if ($user) {
-            Log::info('The email has already been taken: ' . $user->email);
+            $user = User::where('email', $request->email)->first();
+            if ($user) {
+                Log::info('The email has already been taken: ' . $user->email);
+                throw new FundoNotesException('The email has already been taken.', 401);
+            }
+            if ($validator->fails()) {
+                return response()->json([$validator->errors()], 400);
+            }
+
+            User::createUser($request);
+            Log::info('User Successfully Registered.');
             return response()->json([
-                'message' => 'The email has already been taken.'
-            ], 401);
+                'status' => 201,
+                'message' => 'User Successfully Registered'
+            ], 201);
+        } catch (FundoNotesException $exception) {
+            return response()->json([
+                'message' => $exception->message()
+            ], $exception->statusCode());
         }
-        if ($validator->fails()) {
-            return response()->json([$validator->errors()], 401);
-        }
-
-        User::createUser($request);
-        Log::info('User Successfully Registered.');
-        return response()->json([
-            'status' => 201,
-            'message' => 'User Successfully Registered'
-        ], 201);
     }
 
     /**
@@ -91,7 +97,6 @@ class UserController extends Controller
      *  ),
      *  @OA\Response(response=404, description="Not a Registered Email"),
      *  @OA\Response(response=402, description="Wrong Password"),
-     *  @OA\Response(response=500, description="Could not create token"),
      *  @OA\Response(response=201, description="Login Successful")
      * )
      * 
@@ -103,50 +108,42 @@ class UserController extends Controller
      */
     public function login(Request $request)
     {
-        $credentials = $request->only('email', 'password');
-
-        //valid credential
-        $validator = Validator::make($credentials, [
-            'email' => 'required|email',
-            'password' => 'required|string|min:6|max:50'
-        ]);
-
-        //Send failed response if request is not valid
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 200);
-        }
-
-        //Request is validated
-        //Create token
-        $user = User::getUserByEmail($request->email);
         try {
+            $credentials = $request->only('email', 'password');
+
+            //valid credential
+            $validator = Validator::make($credentials, [
+                'email' => 'required|email',
+                'password' => 'required|string|min:6|max:50'
+            ]);
+
+            //Send failed response if request is not valid
+            if ($validator->fails()) {
+                return response()->json(['error' => $validator->errors()], 400);
+            }
+
+            //Request is validated
+            $user = User::getUserByEmail($request->email);
             if (!$user) {
                 Log::error('Not a Registered Email');
-                return response()->json([
-                    'message' => 'Not a Registered Email'
-                ], 404);
+                throw new FundoNotesException('Not a Registered Email', 404);
             } elseif (!Hash::check($request->password, $user->password)) {
                 Log::error('Wrong Password');
+                throw new FundoNotesException('Wrong Password', 402);
+            } else {
+                //Token created, return with success response and jwt token
+                $token = JWTAuth::attempt($credentials);
+                Log::info('Login Successful');
                 return response()->json([
-                    'message' => 'Wrong Password'
-                ], 402);
+                    'success' => 'Login Successful',
+                    'token' => $token
+                ], 201);
             }
-        } catch (JWTException $e) {
-            return $credentials;
-            Log::error('Could not create token');
+        } catch (FundoNotesException $exception) {
             return response()->json([
-                'status' => 500,
-                'message' => 'Could not create token',
-            ], 500);
+                'message' => $exception->message()
+            ], $exception->statusCode());
         }
-
-        //Token created, return with success response and jwt token
-        $token = JWTAuth::attempt($credentials);
-        Log::info('Login Successful');
-        return response()->json([
-            'success' => 'Login Successful',
-            'token' => $token
-        ], 201);
     }
 
     /**

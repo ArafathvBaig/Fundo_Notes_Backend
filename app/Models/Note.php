@@ -34,7 +34,32 @@ class Note extends Model
         //     'description' => $request->description,
         //     'user_id' => $user_id
         // ]);
-        //return $note;
+        //return $note->id;
+    }
+
+    /**
+     * Create a new Note with the given attributes
+     * for the user id given
+     * 
+     * @return integer
+     */
+    public static function createNotes($request, $user_id, $colour)
+    {
+        $note = new Note;
+        $note->title = $request->title;
+        $note->description = $request->description;
+        $note->user_id = $user_id;
+        if($request->pin == true)
+        {
+            $note->pin = 1;
+        }
+        if($request->archive == true)
+        {
+            $note->archive = 1;
+        }
+        $note->colour = $colour;
+        $note->save();
+        return $note->id;
     }
 
     /**

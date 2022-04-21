@@ -65,9 +65,7 @@ class NoteController extends Controller
 
             if (!$user) {
                 Log::error('Invalid Authorization Token');
-                return response()->json([
-                    'message' => 'Invalid Authorization Token'
-                ], 401);
+                throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
                 Note::createNote($request, $user->id);
                 Log::info('Notes Created Successfully For User::' . $user->id);
@@ -75,18 +73,18 @@ class NoteController extends Controller
                     'message' => 'Notes Created Successfully'
                 ], 201);
             }
-        } catch (JWTException $exception) {
+        } catch (FundoNotesException $exception) {
             return response()->json([
-                'message' => $exception->getMessage()
-            ], 400);
+                'message' => $exception->message()
+            ], $exception->statusCode());
         }
     }
 
     /**
      * @OA\Post(
-     *   path="/api/createNoteWithLabel",
-     *   summary="Create Note and label",
-     *   description="Create Notes for User and add label to note",
+     *   path="/api/createNotes",
+     *   summary="Create Note with label, pin, archive and colour",
+     *   description="Create Notes for User",
      *   @OA\RequestBody(
      *         @OA\JsonContent(),
      *         @OA\MediaType(
@@ -97,12 +95,17 @@ class NoteController extends Controller
      *               @OA\Property(property="title", type="string"),
      *               @OA\Property(property="description", type="string"),  
      *               @OA\Property(property="label_id", type="integer"),  
+     *               @OA\Property(property="pin", type="boolean"),  
+     *               @OA\Property(property="archive", type="boolean"),  
+     *               @OA\Property(property="colour"),  
      *            ),
      *        ),
      *    ),
-     *   @OA\Response(response=201, description="Notes Created Successfully and Added Label"),
+     *   @OA\Response(response=201, description="Notes Created Successfully"),
      *   @OA\Response(response=401, description="Invalid Authorization Token"),
      *   @OA\Response(response=404, description="Label Not Found"),
+     *   @OA\Response(response=406, description="Colour Not Specified in the List"),
+     *   @OA\Response(response=409, description="Pin and Archive Cannot be True at the Same Time"),
      *   security={
      *       {"Bearer": {}}
      *     }
@@ -113,13 +116,16 @@ class NoteController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function createNoteWithLabel(Request $request)
+    public function createNotes(Request $request)
     {
         try {
             $validator = Validator::make($request->all(), [
                 'title' => 'required|string|min:3|max:30',
                 'description' => 'required|string|min:3|max:1000',
-                'label_id' => 'required|integer'
+                'label_id' => 'required|integer',
+                'pin' => 'boolean',
+                'archive' => 'boolean',
+                'colour' => ''
             ]);
 
             if ($validator->fails()) {
@@ -130,29 +136,51 @@ class NoteController extends Controller
 
             if (!$user) {
                 Log::error('Invalid Authorization Token');
-                return response()->json([
-                    'message' => 'Invalid Authorization Token'
-                ], 401);
+                throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
                 $label = Label::where('user_id', $user->id)->where('id', $request->label_id)->first();
                 if (!$label) {
                     Log::error('Label Not Found');
-                    return response()->json([
-                        'message' => 'Label Not Found'
-                    ], 404);
+                    throw new FundoNotesException('Label Not Found', 404);
                 } else {
-                    $note_id = Note::createNote($request, $user->id);
-                    LabelNotes::createNoteandLabel($note_id, $request->label_id, $user->id);
-                    Log::info('Notes Created Successfully For User::' . $user->id);
-                    return response()->json([
-                        'message' => 'Notes Created Successfully and Added Label'
-                    ], 201);
+                    if ($request->pin == true && $request->archive == true) {
+                        throw new FundoNotesException('Pin and Archive Cannot be True at the Same Time', 409);
+                    } else {
+                        $colours  =  array(
+                            'white' => 'rgb(255,255,255)',
+                            'red' => 'rgb(255,0,0)',
+                            'orange' => 'rgb(255,165,0)',
+                            'green' => 'rgb(0,255,0)',
+                            'teal' => 'rgb(0,128,128)',
+                            'blue' => 'rgb(0,0,255)',
+                            'darkblue' => 'rgb(0,0,139)',
+                            'purple' => 'rgb(128,0,128)',
+                            'pink' => 'rgb(255,192,203)',
+                            'brown' => 'rgb(165,42,42)',
+                            'yellow' => 'rgb(255,255,0)',
+                            'gray' => 'rgb(128,128,128)',
+                        );
+                        $colour = strtolower($request->colour);
+                        if ($request->colour == '') {
+                            $colour = "white";
+                        } elseif (isset($colours[$colour])) {
+                            $colour = strtolower($request->colour);
+                        } else {
+                            throw new FundoNotesException('Colour Not Specified in the List', 406);
+                        }
+                        $note_id = Note::createNotes($request, $user->id, $colours[$colour]);
+                        LabelNotes::createNoteandLabel($note_id, $request->label_id, $user->id);
+                        Log::info('Notes Created Successfully For User::' . $user->id);
+                        return response()->json([
+                            'message' => 'Notes Created Successfully'
+                        ], 201);
+                    }
                 }
             }
-        } catch (JWTException $exception) {
+        } catch (FundoNotesException $exception) {
             return response()->json([
-                'message' => $exception->getMessage()
-            ], 400);
+                'message' => $exception->message()
+            ], $exception->statusCode());
         }
     }
 
@@ -183,25 +211,29 @@ class NoteController extends Controller
      */
     public function displayNoteById(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'id' => 'required|integer'
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'id' => 'required|integer'
+            ]);
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 400);
-        }
-        $notes = Note::getNoteByNoteId($request->id);
-        if (!$notes) {
-            Log::error('Notes Not Found');
+            if ($validator->fails()) {
+                return response()->json($validator->errors(), 400);
+            }
+            $notes = Note::getNoteByNoteId($request->id);
+            if (!$notes) {
+                Log::error('Notes Not Found');
+                throw new FundoNotesException('Notes Not Found', 404);
+            } else {
+                Log::info('Notes Fetched Successfully');
+                return response()->json([
+                    'message' => 'Notes Fetched Successfully',
+                    'Notes' => $notes
+                ], 200);
+            }
+        } catch (FundoNotesException $exception) {
             return response()->json([
-                'message' => 'Notes Not Found'
-            ], 404);
-        } else {
-            Log::info('Notes Fetched Successfully');
-            return response()->json([
-                'message' => 'Notes Fetched Successfully',
-                'Notes' => $notes
-            ], 200);
+                'message' => $exception->message()
+            ], $exception->statusCode());
         }
     }
 
@@ -230,16 +262,12 @@ class NoteController extends Controller
             $currentUser = JWTAuth::parseToken()->authenticate();
             if (!$currentUser) {
                 Log::error('Invalid Authorization Token');
-                return response()->json([
-                    'message' => 'Invalid Authorization Token'
-                ], 401);
+                throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
                 $notes = Note::getNotesByUserId($currentUser->id);
                 if (!$notes) {
                     Log::error('Notes Not Found');
-                    return response()->json([
-                        'message' => 'Notes Not Found'
-                    ], 404);
+                    throw new FundoNotesException('Notes Not Found', 404);
                 } else {
                     Log::info('All Notes are Fetched Successfully for User:: ' . $currentUser->id);
                     return response()->json([
@@ -248,10 +276,10 @@ class NoteController extends Controller
                     ], 200);
                 }
             }
-        } catch (JWTException $exception) {
+        } catch (FundoNotesException $exception) {
             return response()->json([
-                'message' => $exception->getMessage()
-            ], 400);
+                'message' => $exception->message()
+            ], $exception->statusCode());
         }
     }
 
@@ -280,16 +308,12 @@ class NoteController extends Controller
             $currentUser = JWTAuth::parseToken()->authenticate();
             if (!$currentUser) {
                 Log::error('Invalid Authorization Token');
-                return response()->json([
-                    'message' => 'Invalid Authorization Token'
-                ], 401);
+                throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
                 $notes = Note::getNotesandItsLabels($currentUser);
                 if (!$notes) {
                     Log::error('Notes Not Found');
-                    return response()->json([
-                        'message' => 'Notes Not Found'
-                    ], 404);
+                    throw new FundoNotesException('Notes Not Found', 404);
                 } else {
                     Log::info('All Notes are Fetched Successfully for User:: ' . $currentUser->id);
                     return response()->json([
@@ -298,10 +322,10 @@ class NoteController extends Controller
                     ], 200);
                 }
             }
-        } catch (JWTException $exception) {
+        } catch (FundoNotesException $exception) {
             return response()->json([
-                'message' => $exception->getMessage()
-            ], 400);
+                'message' => $exception->message()
+            ], $exception->statusCode());
         }
     }
 
@@ -355,16 +379,12 @@ class NoteController extends Controller
 
             if (!$currentUser) {
                 Log::error('Invalid Authorization Token');
-                return response()->json([
-                    'message' => 'Invalid Authorization Token'
-                ], 401);
+                throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
                 $notes = Note::getNotesByNoteIdandUserId($id, $currentUser->id);
                 if (!$notes) {
                     Log::error('Notes Not Found');
-                    return response()->json([
-                        'message' => 'Notes Not Found'
-                    ], 404);
+                    throw new FundoNotesException('Notes Not Found', 404);
                 } else {
                     $notes = Note::updateNote($notes, $request, $currentUser->id);
                     Log::info('Notes Updated Successfully');
@@ -375,10 +395,10 @@ class NoteController extends Controller
                     }
                 }
             }
-        } catch (JWTException $exception) {
+        } catch (FundoNotesException $exception) {
             return response()->json([
-                'message' => $exception->getMessage()
-            ], 400);
+                'message' => $exception->message()
+            ], $exception->statusCode());
         }
     }
 
@@ -428,16 +448,12 @@ class NoteController extends Controller
 
             if (!$currentUser) {
                 Log::error('Invalid Authorization Token');
-                return response()->json([
-                    'message' => 'Invalid Authorization Token'
-                ], 401);
+                throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
                 $notes = Note::getNotesByNoteIdandUserId($id, $currentUser->id);
                 if (!$notes) {
                     Log::error('Notes Not Found');
-                    return response()->json([
-                        'message' => 'Notes Not Found'
-                    ], 404);
+                    throw new FundoNotesException('Notes Not Found', 404);
                 } else {
                     Log::info('Note Deleted Successfully');
                     if ($notes->delete()) {
@@ -447,10 +463,10 @@ class NoteController extends Controller
                     }
                 }
             }
-        } catch (JWTException $exception) {
+        } catch (FundoNotesException $exception) {
             return response()->json([
-                'message' => $exception->getMessage()
-            ], 400);
+                'message' => $exception->message()
+            ], $exception->statusCode());
         }
     }
 
@@ -502,24 +518,18 @@ class NoteController extends Controller
 
             if (!$user) {
                 Log::error('Invalid Authorization Token');
-                return response()->json([
-                    'message' => 'Invalid Authorization Token'
-                ], 401);
+                throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
                 $notes = Note::getNotesByNoteIdandUserId($request->note_id, $user->id);
                 $label = Label::getLabelByLabelIdandUserId($request->label_id, $user->id);
                 if (!$notes || !$label) {
                     Log::error('Note or Label Not Found');
-                    return response()->json([
-                        'message' => 'Note or Label Not Found'
-                    ], 404);
+                    throw new FundoNotesException('Notes or Label Not Found', 404);
                 } else {
                     $labelnote = LabelNotes::getLabelNotesbyLabelIdNoteIdandUserId($request, $user->id);
-                    Log::info('Note Already Have This Label');
                     if ($labelnote) {
-                        return response()->json([
-                            'message' => 'Note Already Have This Label'
-                        ], 409);
+                        Log::info('Note Already Have This Label');
+                        throw new FundoNotesException('Note Already Have This Label', 409);
                     } else {
                         LabelNotes::createNoteLabel($request, $user->id);
                         Log::info('LabelNote Added Successfully');
@@ -529,10 +539,10 @@ class NoteController extends Controller
                     }
                 }
             }
-        } catch (JWTException $exception) {
+        } catch (FundoNotesException $exception) {
             return response()->json([
-                'message' => $exception->getMessage()
-            ], 400);
+                'message' => $exception->message()
+            ], $exception->statusCode());
         }
     }
 
@@ -583,17 +593,12 @@ class NoteController extends Controller
 
             if (!$user) {
                 Log::error('Invalid Authorization Token');
-                return response()->json([
-                    'status' => 401,
-                    'message' => 'Invalid Authorization Token'
-                ], 401);
+                throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
                 $labelnote = LabelNotes::getLabelNotesbyLabelIdNoteIdandUserId($request, $user->id);
                 if (!$labelnote) {
                     Log::error('LabelNotes Not Found With These Credentials');
-                    return response()->json([
-                        'message' => 'LabelNotes Not Found With These Credentials'
-                    ], 404);
+                    throw new FundoNotesException('LabelNotes Not Found With These Credentials', 404);
                 } else {
                     $labelnote->delete($labelnote->id);
                     Log::info('Label Note Successfully Deleted');
@@ -603,10 +608,10 @@ class NoteController extends Controller
                     ], 201);
                 }
             }
-        } catch (JWTException $exception) {
+        } catch (FundoNotesException $exception) {
             return response()->json([
-                'message' => $exception->getMessage()
-            ], 400);
+                'message' => $exception->message()
+            ], $exception->statusCode());
         }
     }
 
@@ -654,16 +659,12 @@ class NoteController extends Controller
             $currentUser = JWTAuth::parseToken()->authenticate();
             if (!$currentUser) {
                 Log::error('Invalid Authorization Token');
-                return response()->json([
-                    'message' => 'Invalid Authorization Token'
-                ], 401);
+                throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
                 $note = Note::getNotesByNoteIdandUserId($request->id, $currentUser->id);
                 if (!$note) {
                     Log::error('Notes Not Found');
-                    return response()->json([
-                        'message' => 'Notes Not Found'
-                    ], 404);
+                    throw new FundoNotesException('Notes Not Found', 404);
                 } else {
                     if ($note->pin == 0) {
                         if ($note->archive == 1) {
@@ -678,16 +679,14 @@ class NoteController extends Controller
                         ], 201);
                     } else {
                         Log::info('Note Already Pinned');
-                        return response()->json([
-                            'message' => 'Note Already Pinned'
-                        ], 409);
+                        throw new FundoNotesException('Note Already Pinned', 409);
                     }
                 }
             }
-        } catch (JWTException $exception) {
+        } catch (FundoNotesException $exception) {
             return response()->json([
-                'message' => $exception->getMessage()
-            ], 400);
+                'message' => $exception->message()
+            ], $exception->statusCode());
         }
     }
 
@@ -735,16 +734,12 @@ class NoteController extends Controller
             $currentUser = JWTAuth::parseToken()->authenticate();
             if (!$currentUser) {
                 Log::error('Invalid Authorization Token');
-                return response()->json([
-                    'message' => 'Invalid Authorization Token'
-                ], 401);
+                throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
                 $note = Note::getNotesByNoteIdandUserId($request->id, $currentUser->id);
                 if (!$note) {
                     Log::error('Notes Not Found');
-                    return response()->json([
-                        'message' => 'Notes Not Found'
-                    ], 404);
+                    throw new FundoNotesException('Notes Not Found', 404);
                 } else {
                     if ($note->pin == 1) {
                         $note->pin = 0;
@@ -755,16 +750,14 @@ class NoteController extends Controller
                         ], 201);
                     } else {
                         Log::info('Note Already UnPinned');
-                        return response()->json([
-                            'message' => 'Note Already UnPinned'
-                        ], 409);
+                        throw new FundoNotesException('Note Already UnPinned', 409);
                     }
                 }
             }
-        } catch (JWTException $exception) {
+        } catch (FundoNotesException $exception) {
             return response()->json([
-                'message' => $exception->getMessage()
-            ], 400);
+                'message' => $exception->message()
+            ], $exception->statusCode());
         }
     }
 
@@ -796,26 +789,22 @@ class NoteController extends Controller
             $currentUser = JWTAuth::parseToken()->authenticate();
             if (!$currentUser) {
                 Log::error('Invalid Authorization Token');
-                return response()->json([
-                    'message' => 'Invalid Authorization Token'
-                ], 401);
+                throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
                 $userNotes = Note::getPinnedNotes($currentUser);
                 if (!$userNotes) {
                     Log::error('Notes Not Found');
-                    return response()->json([
-                        'message' => 'Notes Not Found'
-                    ], 404);
+                    throw new FundoNotesException('Notes Not Found', 404);
                 }
                 return response()->json([
                     'message' => 'Fetched All Pinned Notes Successfully',
                     'notes' => $userNotes
                 ], 201);
             }
-        } catch (JWTException $exception) {
+        } catch (FundoNotesException $exception) {
             return response()->json([
-                'message' => $exception->getMessage()
-            ], 400);
+                'message' => $exception->message()
+            ], $exception->statusCode());
         }
     }
 
@@ -847,26 +836,22 @@ class NoteController extends Controller
             $currentUser = JWTAuth::parseToken()->authenticate();
             if (!$currentUser) {
                 Log::error('Invalid Authorization Token');
-                return response()->json([
-                    'message' => 'Invalid Authorization Token'
-                ], 401);
+                throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
                 $userNotes = Note::getPinnedNotesandItsLabels($currentUser);
                 if (!$userNotes) {
                     Log::error('Notes Not Found');
-                    return response()->json([
-                        'message' => 'Notes Not Found'
-                    ], 404);
+                    throw new FundoNotesException('Notes Not Found', 404);
                 }
                 return response()->json([
                     'message' => 'Fetched All Pinned Notes Successfully',
                     'notes' => $userNotes
                 ], 201);
             }
-        } catch (JWTException $exception) {
+        } catch (FundoNotesException $exception) {
             return response()->json([
-                'message' => $exception->getMessage()
-            ], 400);
+                'message' => $exception->message()
+            ], $exception->statusCode());
         }
     }
 
@@ -914,16 +899,12 @@ class NoteController extends Controller
             $currentUser = JWTAuth::parseToken()->authenticate();
             if (!$currentUser) {
                 Log::error('Invalid Authorization Token');
-                return response()->json([
-                    'message' => 'Invalid Authorization Token'
-                ], 401);
+                throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
                 $note = Note::getNotesByNoteIdandUserId($request->id, $currentUser->id);
-                Log::error('Notes Not found');
                 if (!$note) {
-                    return response()->json([
-                        'message' => 'Notes Not Found'
-                    ], 404);
+                    Log::error('Notes Not found');
+                    throw new FundoNotesException('Notes Not Found', 404);
                 } else {
                     if ($note->archive == 0) {
                         if ($note->pin == 1) {
@@ -938,16 +919,14 @@ class NoteController extends Controller
                         ], 201);
                     } else {
                         Log::info('Note Already Archived');
-                        return response()->json([
-                            'message' => 'Note Already Archived'
-                        ], 409);
+                        throw new FundoNotesException('Note Already Archived', 409);
                     }
                 }
             }
-        } catch (JWTException $exception) {
+        } catch (FundoNotesException $exception) {
             return response()->json([
-                'message' => $exception->getMessage()
-            ], 400);
+                'message' => $exception->message()
+            ], $exception->statusCode());
         }
     }
 
@@ -995,16 +974,12 @@ class NoteController extends Controller
             $currentUser = JWTAuth::parseToken()->authenticate();
             if (!$currentUser) {
                 Log::error('Invalid Authorization Token');
-                return response()->json([
-                    'message' => 'Invalid Authorization Token'
-                ], 401);
+                throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
                 $note = Note::getNotesByNoteIdandUserId($request->id, $currentUser->id);
                 if (!$note) {
                     Log::error('Notes Not Found');
-                    return response()->json([
-                        'message' => 'Notes Not Found'
-                    ], 404);
+                    throw new FundoNotesException('Notes Not Found', 404);
                 } else {
                     if ($note->archive == 1) {
                         $note->archive = 0;
@@ -1015,16 +990,14 @@ class NoteController extends Controller
                         ], 201);
                     } else {
                         Log::info('Note Already UnPinned');
-                        return response()->json([
-                            'message' => 'Note Already UnArchived'
-                        ], 409);
+                        throw new FundoNotesException('Note Already UnArchived', 409);
                     }
                 }
             }
-        } catch (JWTException $exception) {
+        } catch (FundoNotesException $exception) {
             return response()->json([
-                'message' => $exception->getMessage()
-            ], 400);
+                'message' => $exception->message()
+            ], $exception->statusCode());
         }
     }
 
@@ -1056,16 +1029,12 @@ class NoteController extends Controller
             $currentUser = JWTAuth::parseToken()->authenticate();
             if (!$currentUser) {
                 Log::error('Invalid Authorization Token');
-                return response()->json([
-                    'message' => 'Invalid Authorization Token'
-                ], 401);
+                throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
                 $userNotes = Note::getArchivedNotes($currentUser);
                 if (!$userNotes) {
                     Log::error('Notes Not Found');
-                    return response()->json([
-                        'message' => 'Notes Not Found'
-                    ], 404);
+                    throw new FundoNotesException('Notes Not Found', 404);
                 }
                 return response()->json([
                     'message' => 'Fetched All Archived Notes Successfully',
@@ -1107,26 +1076,22 @@ class NoteController extends Controller
             $currentUser = JWTAuth::parseToken()->authenticate();
             if (!$currentUser) {
                 Log::error('Invalid Authorization Token');
-                return response()->json([
-                    'message' => 'Invalid Authorization Token'
-                ], 401);
+                throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
                 $userNotes = Note::getArchivedNotesandItsLabels($currentUser);
                 if (!$userNotes) {
                     Log::error('Notes Not Found');
-                    return response()->json([
-                        'message' => 'Notes Not Found'
-                    ], 404);
+                    throw new FundoNotesException('Notes Not Found', 404);
                 }
                 return response()->json([
                     'message' => 'Fetched All Archived Notes Successfully',
                     'notes' => $userNotes
                 ], 201);
             }
-        } catch (JWTException $exception) {
+        } catch (FundoNotesException $exception) {
             return response()->json([
-                'message' => $exception->getMessage()
-            ], 400);
+                'message' => $exception->message()
+            ], $exception->statusCode());
         }
     }
 
@@ -1150,7 +1115,7 @@ class NoteController extends Controller
      *   @OA\Response(response=201, description="Note Coloured Sucessfully"),
      *   @OA\Response(response=401, description="Invalid Authorization Token"),
      *   @OA\Response(response=404, description="Notes Not Found"),
-     *   @OA\Response(response=400, description="Colour Not Specified in the List"),
+     *   @OA\Response(response=406, description="Colour Not Specified in the List"),
      *   security = {
      * {
      * "Bearer" : {}}}
@@ -1178,16 +1143,12 @@ class NoteController extends Controller
 
             if (!$currentUser) {
                 Log::error('Invalid Authorization Token');
-                return response()->json([
-                    'message' => 'Invalid Authorization Token'
-                ], 401);
+                throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
                 $note = Note::getNotesByNoteIdandUserId($request->id, $currentUser->id);
                 if (!$note) {
                     Log::error('Notes Not Found', ['user' => $currentUser, 'id' => $request->id]);
-                    return response()->json([
-                        'message' => 'Notes Not Found'
-                    ], 404);
+                    throw new FundoNotesException('Notes Not Found', 404);
                 } else {
                     $colours  =  array(
                         'white' => 'rgb(255,255,255)',
@@ -1215,16 +1176,14 @@ class NoteController extends Controller
                             'message' => 'Note Coloured Sucessfully'
                         ], 201);
                     } else {
-                        return response()->json([
-                            'message' => 'Colour Not Specified in the List'
-                        ], 400);
+                        throw new FundoNotesException('Colour Not Specified in the List', 406);
                     }
                 }
             }
-        } catch (JWTException $exception) {
+        } catch (FundoNotesException $exception) {
             return response()->json([
-                'message' => $exception->getMessage()
-            ], 400);
+                'message' => $exception->message()
+            ], $exception->statusCode());
         }
     }
 }
