@@ -41,8 +41,15 @@ Route::group(['middleware' => 'api'], function () {
     Route::post('addNoteLabel', [NoteController::class, 'addNoteLabel']);
     Route::post('deleteNoteLabel', [NoteController::class, 'deleteNoteLabel']);
     Route::post('pinNoteById', [NoteController::class, 'pinNoteById']);
+    Route::post('unPinNoteById', [NoteController::class, 'unPinNoteById']);
+    Route::get('getAllPinnedNotes', [NoteController::class, 'getAllPinnedNotes']);
+    Route::get('getAllPinnedNotesandItsLabels', [NoteController::class, 'getAllPinnedNotesandItsLabels']);
     Route::post('archiveNoteById', [NoteController::class, 'archiveNoteById']);
-    Route::post('colorNoteById', [NoteController::class, 'colorNoteById']);
+    Route::post('unArchiveNoteById', [NoteController::class, 'unArchiveNoteById']);
+    Route::get('getAllArchivedNotes', [NoteController::class, 'getAllArchivedNotes']);
+    Route::get('getAllArchivedNotesandItsLabels', [NoteController::class, 'getAllArchivedNotesandItsLabels']);
+    Route::post('colourNoteById', [NoteController::class, 'colourNoteById']);
+
     Route::post('createLabel', [LabelController::class, 'createLabel']);
     Route::get('readAllLabels', [LabelController::class, 'readAllLabels']);
     Route::post('updateLabel', [LabelController::class, 'updateLabel']);

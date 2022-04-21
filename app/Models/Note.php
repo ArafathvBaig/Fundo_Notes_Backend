@@ -18,7 +18,7 @@ class Note extends Model
      * Create a new Note with the given attributes
      * for the user id given
      * 
-     * @return mixed
+     * @return integer
      */
     public static function createNote($request, $user_id)
     {
@@ -98,8 +98,66 @@ class Note extends Model
     {
         $notes = Note::leftJoin('label_notes', 'label_notes.note_id', '=', 'notes.id')
             ->leftJoin('labels', 'labels.id', '=', 'label_notes.label_id')
-            ->select('notes.id', 'notes.title', 'notes.description', 'notes.pin', 'notes.archive', 'labels.labelname')
+            ->select('notes.id', 'notes.title', 'notes.description', 'notes.pin', 'notes.archive', 'notes.colour', 'labels.labelname')
             ->where('notes.user_id', $user->id)->get();
+        return $notes;
+    }
+
+    /**
+     * Function to get the pinned notes
+     * Passing the user as a parameter
+     * 
+     * @return array
+     */
+    public static function getPinnedNotes($user)
+    {
+        $notes = Note::where('user_id', $user->id)->where('pin',1)->get();
+
+        return $notes;
+    }
+
+    /**
+     * Function to get the pinned notes and their labels
+     * Passing the user as a parameter
+     * 
+     * @return array
+     */
+    public static function getPinnedNotesandItsLabels($user)
+    {
+        $notes = Note::leftJoin('label_notes', 'label_notes.note_id', '=', 'notes.id')
+            ->leftJoin('labels', 'labels.id', '=', 'label_notes.label_id')
+            ->select('notes.id', 'notes.title', 'notes.description', 'notes.pin', 'notes.archive', 'notes.colour', 'labels.labelname')
+            ->where([['notes.user_id', '=', $user->id], ['pin', '=', 1]])->get();
+
+        return $notes;
+    }
+
+    /**
+     * Function to get the Archived Notes
+     * Passing the user as a parameter
+     * 
+     * @return array
+     */
+    public static function getArchivedNotes($user)
+    {
+        $notes = Note::where('user_id', $user->id)->where('archive', 1)->get();
+
+        return $notes;
+    }
+
+    /**
+     * Function to get the archived notes and their labels
+     * Passing the user as a parameter
+     * 
+     * @return array
+     */
+    public static function getArchivedNotesandItsLabels($user)
+    {
+        $notes = Note::leftJoin('label_notes', 'label_notes.note_id', '=', 'notes.id')
+        ->leftJoin('labels', 'labels.id', '=', 'label_notes.label_id')
+        ->select('notes.id', 'notes.title', 'notes.description', 'notes.pin', 'notes.archive', 'notes.colour', 'labels.labelname')
+        ->where([['notes.user_id', '=', $user->id], ['archive', '=', 1]])->get();
+
         return $notes;
     }
 

@@ -611,8 +611,33 @@ class NoteController extends Controller
     }
 
     /**
-     * Pin Note By ID
-     * Pin Note using Note_id and Authorization token
+     * @OA\Post(
+     *   path="/api/pinNoteById",
+     *   summary="Pin Note by id",
+     *   description=" Pin Note by its id ",
+     *   @OA\RequestBody(
+     *         @OA\JsonContent(),
+     *         @OA\MediaType(
+     *            mediaType="multipart/form-data",
+     *            @OA\Schema(
+     *               type="object",
+     *               required={"id"},
+     *               @OA\Property(property="id", type="integer"),
+     *            ),
+     *        ),
+     *    ),
+     *   @OA\Response(response=201, description="Note Pinned Sucessfully"),
+     *   @OA\Response(response=404, description="Notes Not Found"),
+     *   @OA\Response(response=409, description="Note Already Pinned"),
+     *   @OA\Response(response=401, description="Invalid Authorization Token"),
+     *   security = {
+     *      {"Bearer" : {}}
+     *  }
+     * )
+     * 
+     * This function takes the User access token and checks if it
+     * authorised or not and it takes the note_id and pin  it
+     * successfully if notes exist.
      * 
      * @return \Illuminate\Http\JsonResponse
      */
@@ -633,7 +658,7 @@ class NoteController extends Controller
                     'message' => 'Invalid Authorization Token'
                 ], 401);
             } else {
-                $note = Note::where('id', $request->id)->where('user_id', $currentUser->id)->first();
+                $note = Note::getNotesByNoteIdandUserId($request->id, $currentUser->id);
                 if (!$note) {
                     Log::error('Notes Not Found');
                     return response()->json([
@@ -667,8 +692,212 @@ class NoteController extends Controller
     }
 
     /**
-     * Archive Note By ID
-     * Archive Note using Note_Id and Authorization token
+     * @OA\Post(
+     *   path="/api/unPinNoteById",
+     *   summary="Unpin Note by id",
+     *   description=" Unpin Note ",
+     *   @OA\RequestBody(
+     *         @OA\JsonContent(),
+     *         @OA\MediaType(
+     *            mediaType="multipart/form-data",
+     *            @OA\Schema(
+     *               type="object",
+     *               required={"id"},
+     *               @OA\Property(property="id", type="integer"),
+     *            ),
+     *        ),
+     *    ),
+     *   @OA\Response(response=201, description="Note UnPinned Successfully"),
+     *   @OA\Response(response=401, description="Invalid Authorization Token"),
+     *   @OA\Response(response=404, description="Notes Not Found"),
+     *   @OA\Response(response=409, description="Note Already UnPinned"),
+     *   security = {
+     *      {"Bearer" : {}}
+     *   }
+     * )
+     * 
+     * This function takes the User access token and checks if it
+     * authorised or not and it takes the note_id and unpin  it
+     * successfully if notes exist.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function unPinNoteById(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'id' => 'required|integer'
+            ]);
+            if ($validator->fails()) {
+                return response()->json($validator->errors()->toJson(), 400);
+            }
+
+            $currentUser = JWTAuth::parseToken()->authenticate();
+            if (!$currentUser) {
+                Log::error('Invalid Authorization Token');
+                return response()->json([
+                    'message' => 'Invalid Authorization Token'
+                ], 401);
+            } else {
+                $note = Note::getNotesByNoteIdandUserId($request->id, $currentUser->id);
+                if (!$note) {
+                    Log::error('Notes Not Found');
+                    return response()->json([
+                        'message' => 'Notes Not Found'
+                    ], 404);
+                } else {
+                    if ($note->pin == 1) {
+                        $note->pin = 0;
+                        $note->save();
+                        Log::info('Note UnPinned Successfully');
+                        return response()->json([
+                            'message' => 'Note UnPinned Successfully'
+                        ], 201);
+                    } else {
+                        Log::info('Note Already UnPinned');
+                        return response()->json([
+                            'message' => 'Note Already UnPinned'
+                        ], 409);
+                    }
+                }
+            }
+        } catch (JWTException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * @OA\Get(
+     *   path="/api/getAllPinnedNotes",
+     *   summary="Display All Pinned Notes",
+     *   description=" Display All Pinned Notes",
+     *   @OA\RequestBody(
+     *
+     *    ),
+     *   @OA\Response(response=404, description="Notes Not Found"),
+     *   @OA\Response(response=401, description="Invalid Authorization Token"),
+     *   @OA\Response(response=201, description="Fetched All Pinned Notes Successfully"),
+     *   security = {
+     *      {"Bearer" : {}}
+     *   }
+     * )
+     * 
+     * This function takes the User access token and 
+     * checks if it authorised or not. 
+     * If Authorized, it returns all the pinned notes successfully.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getAllPinnedNotes()
+    {
+        try {
+            $currentUser = JWTAuth::parseToken()->authenticate();
+            if (!$currentUser) {
+                Log::error('Invalid Authorization Token');
+                return response()->json([
+                    'message' => 'Invalid Authorization Token'
+                ], 401);
+            } else {
+                $userNotes = Note::getPinnedNotes($currentUser);
+                if (!$userNotes) {
+                    Log::error('Notes Not Found');
+                    return response()->json([
+                        'message' => 'Notes Not Found'
+                    ], 404);
+                }
+                return response()->json([
+                    'message' => 'Fetched All Pinned Notes Successfully',
+                    'notes' => $userNotes
+                ], 201);
+            }
+        } catch (JWTException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * @OA\Get(
+     *   path="/api/getAllPinnedNotesandItsLabels",
+     *   summary="Display All Pinned Notes and its labels",
+     *   description=" Display All Pinned Notes and its labels",
+     *   @OA\RequestBody(
+     *
+     *    ),
+     *   @OA\Response(response=404, description="Notes Not Found"),
+     *   @OA\Response(response=401, description="Invalid Authorization Token"),
+     *   @OA\Response(response=201, description="Fetched All Pinned Notes Successfully"),
+     *   security = {
+     *      {"Bearer" : {}}
+     *   }
+     * )
+     * 
+     * This function takes the User access token and 
+     * checks if it authorised or not. 
+     * If Authorized, it returns all the pinned notes and their labels successfully.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getAllPinnedNotesandItsLabels()
+    {
+        try {
+            $currentUser = JWTAuth::parseToken()->authenticate();
+            if (!$currentUser) {
+                Log::error('Invalid Authorization Token');
+                return response()->json([
+                    'message' => 'Invalid Authorization Token'
+                ], 401);
+            } else {
+                $userNotes = Note::getPinnedNotesandItsLabels($currentUser);
+                if (!$userNotes) {
+                    Log::error('Notes Not Found');
+                    return response()->json([
+                        'message' => 'Notes Not Found'
+                    ], 404);
+                }
+                return response()->json([
+                    'message' => 'Fetched All Pinned Notes Successfully',
+                    'notes' => $userNotes
+                ], 201);
+            }
+        } catch (JWTException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *   path="/api/archiveNoteById",
+     *   summary="Archive Note by id",
+     *   description="Archive Note by its id ",
+     *   @OA\RequestBody(
+     *         @OA\JsonContent(),
+     *         @OA\MediaType(
+     *            mediaType="multipart/form-data",
+     *            @OA\Schema(
+     *               type="object",
+     *               required={"id"},
+     *               @OA\Property(property="id", type="integer"),
+     *            ),
+     *        ),
+     *    ),
+     *   @OA\Response(response=201, description="Note Archive Sucessfully"),
+     *   @OA\Response(response=404, description="Notes Not Found"),
+     *   @OA\Response(response=409, description="Note Already Archived"),
+     *   @OA\Response(response=401, description="Invalid Authorization Token"),
+     *   security = {
+     *      {"Bearer" : {}}
+     *  }
+     * )
+     * 
+     * This function takes the User access token and checks if it
+     * authorised or not and it takes the note_id and archive it
+     * successfully if notes exist.
      * 
      * @return \Illuminate\Http\JsonResponse
      */
@@ -689,7 +918,7 @@ class NoteController extends Controller
                     'message' => 'Invalid Authorization Token'
                 ], 401);
             } else {
-                $note = Note::where('id', $request->id)->where('user_id', $currentUser->id)->first();
+                $note = Note::getNotesByNoteIdandUserId($request->id, $currentUser->id);
                 Log::error('Notes Not found');
                 if (!$note) {
                     return response()->json([
@@ -697,6 +926,10 @@ class NoteController extends Controller
                     ], 404);
                 } else {
                     if ($note->archive == 0) {
+                        if ($note->pin == 1) {
+                            $note->pin = 0;
+                            $note->save();
+                        }
                         $note->archive = 1;
                         $note->save();
                         Log::info('Note Archived Successfully');
@@ -708,6 +941,283 @@ class NoteController extends Controller
                         return response()->json([
                             'message' => 'Note Already Archived'
                         ], 409);
+                    }
+                }
+            }
+        } catch (JWTException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *   path="/api/unArchiveNoteById",
+     *   summary="Unarchive Note by id",
+     *   description=" Unarchive Note ",
+     *   @OA\RequestBody(
+     *         @OA\JsonContent(),
+     *         @OA\MediaType(
+     *            mediaType="multipart/form-data",
+     *            @OA\Schema(
+     *               type="object",
+     *               required={"id"},
+     *               @OA\Property(property="id", type="integer"),
+     *            ),
+     *        ),
+     *    ),
+     *   @OA\Response(response=201, description="Note UnArchived Successfully"),
+     *   @OA\Response(response=401, description="Invalid Authorization Token"),
+     *   @OA\Response(response=404, description="Notes Not Found"),
+     *   @OA\Response(response=409, description="Note Already UnArchived"),
+     *   security = {
+     *      {"Bearer" : {}}
+     *   }
+     * )
+     * 
+     * This function takes the User access token and checks if it
+     * authorised or not and it takes the note_id and unarchive it
+     * successfully if notes exist.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function unArchiveNoteById(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'id' => 'required|integer'
+            ]);
+            if ($validator->fails()) {
+                return response()->json($validator->errors()->toJson(), 400);
+            }
+
+            $currentUser = JWTAuth::parseToken()->authenticate();
+            if (!$currentUser) {
+                Log::error('Invalid Authorization Token');
+                return response()->json([
+                    'message' => 'Invalid Authorization Token'
+                ], 401);
+            } else {
+                $note = Note::getNotesByNoteIdandUserId($request->id, $currentUser->id);
+                if (!$note) {
+                    Log::error('Notes Not Found');
+                    return response()->json([
+                        'message' => 'Notes Not Found'
+                    ], 404);
+                } else {
+                    if ($note->archive == 1) {
+                        $note->archive = 0;
+                        $note->save();
+                        Log::info('Note UnArchived Successfully');
+                        return response()->json([
+                            'message' => 'Note UnArchived Successfully'
+                        ], 201);
+                    } else {
+                        Log::info('Note Already UnPinned');
+                        return response()->json([
+                            'message' => 'Note Already UnArchived'
+                        ], 409);
+                    }
+                }
+            }
+        } catch (JWTException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * @OA\Get(
+     *   path="/api/getAllArchivedNotes",
+     *   summary="Display All Archived Notes",
+     *   description=" Display All Archived Notes",
+     *   @OA\RequestBody(
+     *
+     *    ),
+     *   @OA\Response(response=404, description="Notes Not Found"),
+     *   @OA\Response(response=401, description="Invalid Authorization Token"),
+     *   @OA\Response(response=201, description="Fetched All Archived Notes Successfully"),
+     *   security = {
+     *      {"Bearer" : {}}
+     *   }
+     * )
+     * 
+     * This function takes the User access token and 
+     * checks if it authorised or not. 
+     * If Authorized, it returns all the archived notes successfully.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getAllArchivedNotes()
+    {
+        try {
+            $currentUser = JWTAuth::parseToken()->authenticate();
+            if (!$currentUser) {
+                Log::error('Invalid Authorization Token');
+                return response()->json([
+                    'message' => 'Invalid Authorization Token'
+                ], 401);
+            } else {
+                $userNotes = Note::getArchivedNotes($currentUser);
+                if (!$userNotes) {
+                    Log::error('Notes Not Found');
+                    return response()->json([
+                        'message' => 'Notes Not Found'
+                    ], 404);
+                }
+                return response()->json([
+                    'message' => 'Fetched All Archived Notes Successfully',
+                    'notes' => $userNotes
+                ], 201);
+            }
+        } catch (JWTException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * @OA\Get(
+     *   path="/api/getAllArchivedNotesandItsLabels",
+     *   summary="Display All Archived Notes and its labels",
+     *   description=" Display All Archived Notes and its labels",
+     *   @OA\RequestBody(
+     *
+     *    ),
+     *   @OA\Response(response=404, description="Notes Not Found"),
+     *   @OA\Response(response=401, description="Invalid Authorization Token"),
+     *   @OA\Response(response=201, description="Fetched All Archived Notes Successfully"),
+     *   security = {
+     *      {"Bearer" : {}}
+     *   }
+     * )
+     * 
+     * This function takes the User access token and 
+     * checks if it authorised or not. 
+     * If Authorized, it returns all the archived notes and their labels successfully.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getAllArchivedNotesandItsLabels()
+    {
+        try {
+            $currentUser = JWTAuth::parseToken()->authenticate();
+            if (!$currentUser) {
+                Log::error('Invalid Authorization Token');
+                return response()->json([
+                    'message' => 'Invalid Authorization Token'
+                ], 401);
+            } else {
+                $userNotes = Note::getArchivedNotesandItsLabels($currentUser);
+                if (!$userNotes) {
+                    Log::error('Notes Not Found');
+                    return response()->json([
+                        'message' => 'Notes Not Found'
+                    ], 404);
+                }
+                return response()->json([
+                    'message' => 'Fetched All Archived Notes Successfully',
+                    'notes' => $userNotes
+                ], 201);
+            }
+        } catch (JWTException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *   path="/api/colourNoteById",
+     *   summary="Colour Note",
+     *   description=" Colour Note ",
+     *   @OA\RequestBody(
+     *         @OA\JsonContent(),
+     *         @OA\MediaType(
+     *            mediaType="multipart/form-data",
+     *            @OA\Schema(
+     *               type="object",
+     *               required={"id" , "colour"},
+     *               @OA\Property(property="id", type="integer"),
+     *               @OA\Property(property="colour", type="string"),
+     *            ),
+     *        ),
+     *    ),
+     *   @OA\Response(response=201, description="Note Coloured Sucessfully"),
+     *   @OA\Response(response=401, description="Invalid Authorization Token"),
+     *   @OA\Response(response=404, description="Notes Not Found"),
+     *   @OA\Response(response=400, description="Colour Not Specified in the List"),
+     *   security = {
+     * {
+     * "Bearer" : {}}}
+     * )
+     * 
+     * This function takes the User access token and 
+     * checks if it authorised or not and it takes the note_id and 
+     * colours it successfully if notes exist.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function colourNoteById(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'id' => 'required|integer',
+                'colour' => 'required|string'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json($validator->errors()->toJson(), 400);
+            }
+
+            $currentUser = JWTAuth::parseToken()->authenticate();
+
+            if (!$currentUser) {
+                Log::error('Invalid Authorization Token');
+                return response()->json([
+                    'message' => 'Invalid Authorization Token'
+                ], 401);
+            } else {
+                $note = Note::getNotesByNoteIdandUserId($request->id, $currentUser->id);
+                if (!$note) {
+                    Log::error('Notes Not Found', ['user' => $currentUser, 'id' => $request->id]);
+                    return response()->json([
+                        'message' => 'Notes Not Found'
+                    ], 404);
+                } else {
+                    $colours  =  array(
+                        'white' => 'rgb(255,255,255)',
+                        'red' => 'rgb(255,0,0)',
+                        'orange' => 'rgb(255,165,0)',
+                        'green' => 'rgb(0,255,0)',
+                        'teal' => 'rgb(0,128,128)',
+                        'blue' => 'rgb(0,0,255)',
+                        'darkblue' => 'rgb(0,0,139)',
+                        'purple' => 'rgb(128,0,128)',
+                        'pink' => 'rgb(255,192,203)',
+                        'brown' => 'rgb(165,42,42)',
+                        'yellow' => 'rgb(255,255,0)',
+                        'gray' => 'rgb(128,128,128)',
+                    );
+
+                    $colour = strtolower($request->colour);
+
+                    if (isset($colours[$colour])) {
+                        $note->colour = $colours[$colour];
+                        $note->save();
+
+                        Log::info('Notes Coloured Successfully', ['user_id' => $currentUser, 'note_id' => $request->id]);
+                        return response()->json([
+                            'message' => 'Note Coloured Sucessfully'
+                        ], 201);
+                    } else {
+                        return response()->json([
+                            'message' => 'Colour Not Specified in the List'
+                        ], 400);
                     }
                 }
             }
