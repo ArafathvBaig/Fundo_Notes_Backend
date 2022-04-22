@@ -34,10 +34,7 @@
                     "404": {
                         "description": "Not a Registered Email"
                     },
-                    "424": {
-                        "description": "Email Not Sent"
-                    },
-                    "200": {
+                    "201": {
                         "description": "Reset Password Token Sent to your Email"
                     }
                 }
@@ -73,8 +70,8 @@
                     }
                 },
                 "responses": {
-                    "400": {
-                        "description": "User Not found with this Email"
+                    "401": {
+                        "description": "Invalid Authorization Token"
                     },
                     "201": {
                         "description": "Password Reset Successful"
@@ -634,6 +631,19 @@
                 ]
             }
         },
+        "/api/paginationNote": {
+            "get": {
+                "summary": "Pagination",
+                "description": "Pagination of Notes",
+                "operationId": "755fc91f8ac78cd7913b1bad409bb71c",
+                "requestBody": {},
+                "responses": {
+                    "201": {
+                        "description": "Pagination Applied to all Notes"
+                    }
+                }
+            }
+        },
         "/api/pinNoteById": {
             "post": {
                 "summary": "Pin Note by id",
@@ -1076,16 +1086,6 @@
                         "Bearer": []
                     }
                 ]
-            }
-        }
-    },
-    "components": {
-        "securitySchemes": {
-            "Bearer": {
-                "type": "http",
-                "description": "Laravel bearer token authentication",
-                "scheme": "bearer",
-                "bearerFormat": "JWT"
             }
         }
     }

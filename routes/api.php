@@ -40,6 +40,7 @@ Route::group(['middleware' => 'api'], function () {
     Route::post('deleteNoteById', [NoteController::class, 'deleteNoteById']);
     Route::post('addNoteLabel', [NoteController::class, 'addNoteLabel']);
     Route::post('deleteNoteLabel', [NoteController::class, 'deleteNoteLabel']);
+    Route::get('paginationNote', [NoteController::class, 'paginationNote']);
     Route::post('pinNoteById', [NoteController::class, 'pinNoteById']);
     Route::post('unPinNoteById', [NoteController::class, 'unPinNoteById']);
     Route::get('getAllPinnedNotes', [NoteController::class, 'getAllPinnedNotes']);

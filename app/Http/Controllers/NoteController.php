@@ -616,6 +616,29 @@ class NoteController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *   path="/api/paginationNote",
+     *   summary="Pagination",
+     *   description="Pagination of Notes",
+     *   @OA\RequestBody(),
+     *   @OA\Response(response=201, description="Pagination Applied to all Notes")
+     * )
+     * 
+     * Function to view all notes,
+     * 4 notes per page will be displayed.
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function paginationNote()
+    {
+        $allNotes = Note::paginate(4);
+        return response()->json([
+            'message' => 'Pagination aplied to all Notes',
+            'notes' =>  $allNotes,
+        ], 201);
+    }
+
+    /**
      * @OA\Post(
      *   path="/api/pinNoteById",
      *   summary="Pin Note by id",
