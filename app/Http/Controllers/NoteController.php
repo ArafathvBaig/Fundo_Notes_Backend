@@ -23,67 +23,7 @@ class NoteController extends Controller
     /**
      * @OA\Post(
      *   path="/api/createNote",
-     *   summary="Create Note",
-     *   description="Create Notes for User",
-     *   @OA\RequestBody(
-     *         @OA\JsonContent(),
-     *         @OA\MediaType(
-     *            mediaType="multipart/form-data",
-     *            @OA\Schema(
-     *               type="object",
-     *               required={"title","description"},
-     *               @OA\Property(property="title", type="string"),
-     *               @OA\Property(property="description", type="string"),  
-     *            ),
-     *        ),
-     *    ),
-     *   @OA\Response(response=201, description="Notes Created Successfully"),
-     *   @OA\Response(response=401, description="Invalid Authorization Token"),
-     *   security={
-     *       {"Bearer": {}}
-     *     }
-     * )
-     * Takes User authorization token and checks if it is authorised or not
-     * If authorised, get user Id and
-     * and create the Note Successfully
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function createNote(Request $request)
-    {
-        try {
-            $validator = Validator::make($request->all(), [
-                'title' => 'required|string|min:3|max:30',
-                'description' => 'required|string|min:3|max:1000'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json($validator->errors(), 400);
-            }
-
-            $user = JWTAuth::parseToken()->authenticate();
-
-            if (!$user) {
-                Log::error('Invalid Authorization Token');
-                throw new FundoNotesException('Invalid Authorization Token', 401);
-            } else {
-                Note::createNote($request, $user->id);
-                Log::info('Notes Created Successfully For User::' . $user->id);
-                return response()->json([
-                    'message' => 'Notes Created Successfully'
-                ], 201);
-            }
-        } catch (FundoNotesException $exception) {
-            return response()->json([
-                'message' => $exception->message()
-            ], $exception->statusCode());
-        }
-    }
-
-    /**
-     * @OA\Post(
-     *   path="/api/createNotes",
-     *   summary="Create Note with label, pin, archive and colour",
+     *   summary="Create Notes",
      *   description="Create Notes for User",
      *   @OA\RequestBody(
      *         @OA\JsonContent(),
@@ -116,7 +56,7 @@ class NoteController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function createNotes(Request $request)
+    public function createNote(Request $request)
     {
         try {
             $validator = Validator::make($request->all(), [
@@ -240,52 +180,6 @@ class NoteController extends Controller
     /**
      * @OA\Get(
      * path="/api/displayAllNotes",
-     * summary="Display Notes of a User",
-     * description="Display Notes of an User",
-     * @OA\RequestBody(),
-     *   @OA\Response(response=200, description="All Notes are Fetched Successfully"),
-     *   @OA\Response(response=404, description="Notes Not Found"),
-     *   @OA\Response(response=401, description="Invalid Authorization Token"),
-     *   security={
-     *       {"Bearer": {}}
-     *   }
-     * )
-     * This function takes authorization token and finds
-     * if there is any note existing on that User id, 
-     * if exists, it successfully fetch the notes and print
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function displayAllNotes()
-    {
-        try {
-            $currentUser = JWTAuth::parseToken()->authenticate();
-            if (!$currentUser) {
-                Log::error('Invalid Authorization Token');
-                throw new FundoNotesException('Invalid Authorization Token', 401);
-            } else {
-                $notes = Note::getNotesByUserId($currentUser->id);
-                if (!$notes) {
-                    Log::error('Notes Not Found');
-                    throw new FundoNotesException('Notes Not Found', 404);
-                } else {
-                    Log::info('All Notes are Fetched Successfully for User:: ' . $currentUser->id);
-                    return response()->json([
-                        'message' => 'All Notes are Fetched Successfully',
-                        'Notes' => $notes
-                    ], 200);
-                }
-            }
-        } catch (FundoNotesException $exception) {
-            return response()->json([
-                'message' => $exception->message()
-            ], $exception->statusCode());
-        }
-    }
-
-    /**
-     * @OA\Get(
-     * path="/api/displayNotesandItsLabels",
      * summary="Display Notes of a User and Labels of a note",
      * description="Display Notes of an User and Labels of that note",
      * @OA\RequestBody(),
@@ -297,12 +191,12 @@ class NoteController extends Controller
      *   }
      * )
      * This function takes authorization token and finds
-     * if there is any note existing on that User id and Labels of that notes
-     * if exists, it successfully fetch the notes and its labels and print
+     * if there is any note existing on that User id and
+     * it successfully fetch the notes and print
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function displayNotesandItsLabels(Request $request)
+    public function displayAllNotes(Request $request)
     {
         try {
             $currentUser = JWTAuth::parseToken()->authenticate();
@@ -616,29 +510,6 @@ class NoteController extends Controller
     }
 
     /**
-     * @OA\Get(
-     *   path="/api/paginationNote",
-     *   summary="Pagination",
-     *   description="Pagination of Notes",
-     *   @OA\RequestBody(),
-     *   @OA\Response(response=201, description="Pagination Applied to all Notes")
-     * )
-     * 
-     * Function to view all notes,
-     * 4 notes per page will be displayed.
-     * 
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function paginationNote()
-    {
-        $allNotes = Note::paginate(4);
-        return response()->json([
-            'message' => 'Pagination aplied to all Notes',
-            'notes' =>  $allNotes,
-        ], 201);
-    }
-
-    /**
      * @OA\Post(
      *   path="/api/pinNoteById",
      *   summary="Pin Note by id",
@@ -807,53 +678,6 @@ class NoteController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
     public function getAllPinnedNotes()
-    {
-        try {
-            $currentUser = JWTAuth::parseToken()->authenticate();
-            if (!$currentUser) {
-                Log::error('Invalid Authorization Token');
-                throw new FundoNotesException('Invalid Authorization Token', 401);
-            } else {
-                $userNotes = Note::getPinnedNotes($currentUser);
-                if (!$userNotes) {
-                    Log::error('Notes Not Found');
-                    throw new FundoNotesException('Notes Not Found', 404);
-                }
-                return response()->json([
-                    'message' => 'Fetched All Pinned Notes Successfully',
-                    'notes' => $userNotes
-                ], 201);
-            }
-        } catch (FundoNotesException $exception) {
-            return response()->json([
-                'message' => $exception->message()
-            ], $exception->statusCode());
-        }
-    }
-
-    /**
-     * @OA\Get(
-     *   path="/api/getAllPinnedNotesandItsLabels",
-     *   summary="Display All Pinned Notes and its labels",
-     *   description=" Display All Pinned Notes and its labels",
-     *   @OA\RequestBody(
-     *
-     *    ),
-     *   @OA\Response(response=404, description="Notes Not Found"),
-     *   @OA\Response(response=401, description="Invalid Authorization Token"),
-     *   @OA\Response(response=201, description="Fetched All Pinned Notes Successfully"),
-     *   security = {
-     *      {"Bearer" : {}}
-     *   }
-     * )
-     * 
-     * This function takes the User access token and 
-     * checks if it authorised or not. 
-     * If Authorized, it returns all the pinned notes and their labels successfully.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getAllPinnedNotesandItsLabels()
     {
         try {
             $currentUser = JWTAuth::parseToken()->authenticate();
@@ -1054,53 +878,6 @@ class NoteController extends Controller
                 Log::error('Invalid Authorization Token');
                 throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
-                $userNotes = Note::getArchivedNotes($currentUser);
-                if (!$userNotes) {
-                    Log::error('Notes Not Found');
-                    throw new FundoNotesException('Notes Not Found', 404);
-                }
-                return response()->json([
-                    'message' => 'Fetched All Archived Notes Successfully',
-                    'notes' => $userNotes
-                ], 201);
-            }
-        } catch (JWTException $exception) {
-            return response()->json([
-                'message' => $exception->getMessage()
-            ], 400);
-        }
-    }
-
-    /**
-     * @OA\Get(
-     *   path="/api/getAllArchivedNotesandItsLabels",
-     *   summary="Display All Archived Notes and its labels",
-     *   description=" Display All Archived Notes and its labels",
-     *   @OA\RequestBody(
-     *
-     *    ),
-     *   @OA\Response(response=404, description="Notes Not Found"),
-     *   @OA\Response(response=401, description="Invalid Authorization Token"),
-     *   @OA\Response(response=201, description="Fetched All Archived Notes Successfully"),
-     *   security = {
-     *      {"Bearer" : {}}
-     *   }
-     * )
-     * 
-     * This function takes the User access token and 
-     * checks if it authorised or not. 
-     * If Authorized, it returns all the archived notes and their labels successfully.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getAllArchivedNotesandItsLabels()
-    {
-        try {
-            $currentUser = JWTAuth::parseToken()->authenticate();
-            if (!$currentUser) {
-                Log::error('Invalid Authorization Token');
-                throw new FundoNotesException('Invalid Authorization Token', 401);
-            } else {
                 $userNotes = Note::getArchivedNotesandItsLabels($currentUser);
                 if (!$userNotes) {
                     Log::error('Notes Not Found');
@@ -1117,7 +894,7 @@ class NoteController extends Controller
             ], $exception->statusCode());
         }
     }
-
+    
     /**
      * @OA\Post(
      *   path="/api/colourNoteById",

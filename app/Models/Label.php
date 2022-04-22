@@ -44,7 +44,7 @@ class Label extends Model
      */
     public static function getLabelsByUserId($user_id)
     {
-        $label = Label::where('user_id', $user_id)->get();
+        $label = Label::where('user_id', $user_id)->paginate(4);
         return $label;
     }
 

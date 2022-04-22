@@ -252,53 +252,9 @@
         },
         "/api/createNote": {
             "post": {
-                "summary": "Create Note",
+                "summary": "Create Notes",
                 "description": "Create Notes for User",
                 "operationId": "3f1be91984161a01ea4647576ef3b3d6",
-                "requestBody": {
-                    "content": {
-                        "multipart/form-data": {
-                            "schema": {
-                                "required": [
-                                    "title",
-                                    "description"
-                                ],
-                                "properties": {
-                                    "title": {
-                                        "type": "string"
-                                    },
-                                    "description": {
-                                        "type": "string"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        },
-                        "application/json": {
-                            "schema": {}
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Notes Created Successfully"
-                    },
-                    "401": {
-                        "description": "Invalid Authorization Token"
-                    }
-                },
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ]
-            }
-        },
-        "/api/createNotes": {
-            "post": {
-                "summary": "Create Note with label, pin, archive and colour",
-                "description": "Create Notes for User",
-                "operationId": "123c850352daa34ca1f18914cb78597d",
                 "requestBody": {
                     "content": {
                         "multipart/form-data": {
@@ -394,33 +350,9 @@
         },
         "/api/displayAllNotes": {
             "get": {
-                "summary": "Display Notes of a User",
-                "description": "Display Notes of an User",
-                "operationId": "7f27ba00e5a31af2974bee64da5b1a2e",
-                "requestBody": {},
-                "responses": {
-                    "200": {
-                        "description": "All Notes are Fetched Successfully"
-                    },
-                    "404": {
-                        "description": "Notes Not Found"
-                    },
-                    "401": {
-                        "description": "Invalid Authorization Token"
-                    }
-                },
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ]
-            }
-        },
-        "/api/displayNotesandItsLabels": {
-            "get": {
                 "summary": "Display Notes of a User and Labels of a note",
                 "description": "Display Notes of an User and Labels of that note",
-                "operationId": "9d7c37383bd09f0aff19356da727a9e2",
+                "operationId": "7f27ba00e5a31af2974bee64da5b1a2e",
                 "requestBody": {},
                 "responses": {
                     "200": {
@@ -631,19 +563,6 @@
                 ]
             }
         },
-        "/api/paginationNote": {
-            "get": {
-                "summary": "Pagination",
-                "description": "Pagination of Notes",
-                "operationId": "755fc91f8ac78cd7913b1bad409bb71c",
-                "requestBody": {},
-                "responses": {
-                    "201": {
-                        "description": "Pagination Applied to all Notes"
-                    }
-                }
-            }
-        },
         "/api/pinNoteById": {
             "post": {
                 "summary": "Pin Note by id",
@@ -760,30 +679,6 @@
                 ]
             }
         },
-        "/api/getAllPinnedNotesandItsLabels": {
-            "get": {
-                "summary": "Display All Pinned Notes and its labels",
-                "description": " Display All Pinned Notes and its labels",
-                "operationId": "7bc73649d58e2c11a11d7cf7a2649a6d",
-                "requestBody": {},
-                "responses": {
-                    "404": {
-                        "description": "Notes Not Found"
-                    },
-                    "401": {
-                        "description": "Invalid Authorization Token"
-                    },
-                    "201": {
-                        "description": "Fetched All Pinned Notes Successfully"
-                    }
-                },
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ]
-            }
-        },
         "/api/archiveNoteById": {
             "post": {
                 "summary": "Archive Note by id",
@@ -881,30 +776,6 @@
                 "summary": "Display All Archived Notes",
                 "description": " Display All Archived Notes",
                 "operationId": "eb35b14c32418812e9bbceb80d967d06",
-                "requestBody": {},
-                "responses": {
-                    "404": {
-                        "description": "Notes Not Found"
-                    },
-                    "401": {
-                        "description": "Invalid Authorization Token"
-                    },
-                    "201": {
-                        "description": "Fetched All Archived Notes Successfully"
-                    }
-                },
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ]
-            }
-        },
-        "/api/getAllArchivedNotesandItsLabels": {
-            "get": {
-                "summary": "Display All Archived Notes and its labels",
-                "description": " Display All Archived Notes and its labels",
-                "operationId": "ae8db255e0c8eb0783308dfe928ff667",
                 "requestBody": {},
                 "responses": {
                     "404": {
@@ -1086,6 +957,16 @@
                         "Bearer": []
                     }
                 ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "Bearer": {
+                "type": "http",
+                "description": "Laravel bearer token authentication",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
             }
         }
     }

@@ -56,15 +56,16 @@ class UserController extends Controller
                 'password_confirmation' => 'required|same:password'
             ]);
 
-            $user = User::where('email', $request->email)->first();
-            if ($user) {
-                Log::info('The email has already been taken: ' . $user->email);
-                throw new FundoNotesException('The email has already been taken.', 401);
-            }
             if ($validator->fails()) {
                 return response()->json([$validator->errors()], 400);
             }
 
+            $user = User::getUserByEmail($request->email);
+            if ($user) {
+                Log::info('The email has already been taken: ' . $user->email);
+                throw new FundoNotesException('The email has already been taken.', 401);
+            }
+            
             User::createUser($request);
             Log::info('User Successfully Registered.');
             return response()->json([

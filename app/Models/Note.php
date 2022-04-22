@@ -124,7 +124,7 @@ class Note extends Model
         $notes = Note::leftJoin('label_notes', 'label_notes.note_id', '=', 'notes.id')
             ->leftJoin('labels', 'labels.id', '=', 'label_notes.label_id')
             ->select('notes.id', 'notes.title', 'notes.description', 'notes.pin', 'notes.archive', 'notes.colour', 'labels.labelname')
-            ->where('notes.user_id', $user->id)->get();
+            ->where('notes.user_id', $user->id)->paginate(4);
         return $notes;
     }
 
@@ -152,7 +152,7 @@ class Note extends Model
         $notes = Note::leftJoin('label_notes', 'label_notes.note_id', '=', 'notes.id')
             ->leftJoin('labels', 'labels.id', '=', 'label_notes.label_id')
             ->select('notes.id', 'notes.title', 'notes.description', 'notes.pin', 'notes.archive', 'notes.colour', 'labels.labelname')
-            ->where([['notes.user_id', '=', $user->id], ['pin', '=', 1]])->get();
+            ->where([['notes.user_id', '=', $user->id], ['pin', '=', 1]])->paginate(4);
 
         return $notes;
     }
@@ -181,7 +181,7 @@ class Note extends Model
         $notes = Note::leftJoin('label_notes', 'label_notes.note_id', '=', 'notes.id')
         ->leftJoin('labels', 'labels.id', '=', 'label_notes.label_id')
         ->select('notes.id', 'notes.title', 'notes.description', 'notes.pin', 'notes.archive', 'notes.colour', 'labels.labelname')
-        ->where([['notes.user_id', '=', $user->id], ['archive', '=', 1]])->get();
+        ->where([['notes.user_id', '=', $user->id], ['archive', '=', 1]])->paginate(4);
 
         return $notes;
     }

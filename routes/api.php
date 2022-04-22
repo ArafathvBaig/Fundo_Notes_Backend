@@ -32,23 +32,18 @@ Route::group(['middleware' => 'api'], function () {
     Route::post('resetPassword', [ForgotPasswordController::class, 'resetPassword']);
 
     Route::post('createNote', [NoteController::class, 'createNote']);
-    Route::post('createNotes', [NoteController::class, 'createNotes']);
     Route::get('displayNoteById', [NoteController::class, 'displayNoteById']);
     Route::get('displayNotes', [NoteController::class, 'displayAllNotes']);
-    Route::get('displayNotesandItsLabels', [NoteController::class, 'displayNotesandItsLabels']);
     Route::post('updateNoteById', [NoteController::class, 'updateNoteById']);
     Route::post('deleteNoteById', [NoteController::class, 'deleteNoteById']);
     Route::post('addNoteLabel', [NoteController::class, 'addNoteLabel']);
     Route::post('deleteNoteLabel', [NoteController::class, 'deleteNoteLabel']);
-    Route::get('paginationNote', [NoteController::class, 'paginationNote']);
     Route::post('pinNoteById', [NoteController::class, 'pinNoteById']);
     Route::post('unPinNoteById', [NoteController::class, 'unPinNoteById']);
     Route::get('getAllPinnedNotes', [NoteController::class, 'getAllPinnedNotes']);
-    Route::get('getAllPinnedNotesandItsLabels', [NoteController::class, 'getAllPinnedNotesandItsLabels']);
     Route::post('archiveNoteById', [NoteController::class, 'archiveNoteById']);
     Route::post('unArchiveNoteById', [NoteController::class, 'unArchiveNoteById']);
     Route::get('getAllArchivedNotes', [NoteController::class, 'getAllArchivedNotes']);
-    Route::get('getAllArchivedNotesandItsLabels', [NoteController::class, 'getAllArchivedNotesandItsLabels']);
     Route::post('colourNoteById', [NoteController::class, 'colourNoteById']);
 
     Route::post('createLabel', [LabelController::class, 'createLabel']);

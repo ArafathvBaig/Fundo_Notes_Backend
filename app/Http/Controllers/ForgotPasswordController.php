@@ -65,7 +65,7 @@ class ForgotPasswordController extends Controller
 
             $token = JWTAuth::fromUser($user);
             if ($user) {
-                $delay = now()->addSeconds(5);
+                $delay = now()->addSeconds(600);
                 $user->notify((new PasswordResetRequest($user->email, $token))->delay($delay));
                 // $mail = new Mailer();
                 // $check = $mail->sendEmail($user, $token);
