@@ -27,7 +27,7 @@ class ForgotPasswordController extends Controller
      *          @OA\Schema(
      *              type="object",
      *              required={"email"},
-     *              @OA\Property(property="email", type="email"),
+     *              @OA\Property(property="email", type="email")
      *          ),  
      *      ),
      *  ),
@@ -130,7 +130,7 @@ class ForgotPasswordController extends Controller
                 throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
                 $user = User::updatePassword($currentUser, $request->new_password);
-                Log::info('Reset Successful: Email Id: ' . $user->email);
+                Log::info('Password Reset Successful for Email Id: ' . $user->email);
                 return response()->json([
                     'message' => 'Password Reset Successful'
                 ], 201);

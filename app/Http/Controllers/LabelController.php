@@ -27,7 +27,7 @@ class LabelController extends Controller
      *            @OA\Schema(
      *               type="object",
      *               required={"labelname"},
-     *               @OA\Property(property="labelname", type="string"),
+     *               @OA\Property(property="labelname", type="string")
      *            ),
      *        ),
      *    ),
@@ -37,7 +37,7 @@ class LabelController extends Controller
      *   @OA\Response(response=202, description="Label Not Added"),
      *   security={
      *       {"Bearer": {}}
-     *     }
+     *   }
      * )
      * 
      * This function takes User access token and 
@@ -95,10 +95,10 @@ class LabelController extends Controller
      *   @OA\RequestBody(),
      *   @OA\Response(response=201, description="Labels Retrieved Successfully."),
      *   @OA\Response(response=401, description="Invalid authorization token"),
-     *   @OA\Response(response=404, description="Notes Not Found"),
+     *   @OA\Response(response=404, description="Labels Not Found"),
      *   security={
      *       {"Bearer": {}}
-     *     }
+     *   }
      * )
      * 
      * This function takes access token and 
@@ -147,7 +147,7 @@ class LabelController extends Controller
      *               type="object",
      *               required={"id","labelname"},
      *               @OA\Property(property="id", type="integer"),
-     *               @OA\Property(property="labelname", type="string"),
+     *               @OA\Property(property="labelname", type="string")
      *            ),
      *        ),
      *    ),
@@ -158,7 +158,7 @@ class LabelController extends Controller
      *   @OA\Response(response=401, description="Invalid Authorization Token"),
      *   security={
      *       {"Bearer": {}}
-     *     }
+     *   }
      * )
      * 
      * This function takes the User access token and label id which
@@ -225,7 +225,7 @@ class LabelController extends Controller
      *            @OA\Schema(
      *               type="object",
      *               required={"id"},
-     *               @OA\Property(property="id", type="integer"),
+     *               @OA\Property(property="id", type="integer")
      *            ),
      *        ),
      *    ),
@@ -234,7 +234,7 @@ class LabelController extends Controller
      *   @OA\Response(response=401, description="Invalid Authorization Token"),
      *   security={
      *       {"Bearer": {}}
-     *     }
+     *   }
      * )
      *
      * This function takes the User access token and label id.

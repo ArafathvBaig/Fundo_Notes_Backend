@@ -22,8 +22,8 @@ class LabelNotes extends Model
      * 
      * @return array
      */
-    public static function getLabelNotesbyLabelIdNoteIdandUserId($request, $user_id){
-        $labelnote = LabelNotes::where('note_id', $request->note_id)->where('label_id', $request->label_id)->where('user_id', $user_id)->first();
+    public static function getLabelNotesbyLabelIdNoteIdandUserId($label_id, $note_id, $user_id){
+        $labelnote = LabelNotes::where('note_id', $note_id)->where('label_id', $label_id)->where('user_id', $user_id)->first();
         return $labelnote;
     }
 

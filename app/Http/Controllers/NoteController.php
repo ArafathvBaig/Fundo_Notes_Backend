@@ -37,7 +37,7 @@ class NoteController extends Controller
      *               @OA\Property(property="label_id", type="integer"),  
      *               @OA\Property(property="pin", type="boolean"),  
      *               @OA\Property(property="archive", type="boolean"),  
-     *               @OA\Property(property="colour"),  
+     *               @OA\Property(property="colour")
      *            ),
      *        ),
      *    ),
@@ -50,6 +50,7 @@ class NoteController extends Controller
      *       {"Bearer": {}}
      *     }
      * )
+     * 
      * Takes User authorization token and checks if it is authorised or not
      * If authorised, get user Id and
      * and create the Note Successfully
@@ -78,7 +79,7 @@ class NoteController extends Controller
                 Log::error('Invalid Authorization Token');
                 throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
-                $label = Label::where('user_id', $user->id)->where('id', $request->label_id)->first();
+                $label = Label::getLabelByLabelIdandUserId($request->label_id, $user->id);
                 if (!$label) {
                     Log::error('Label Not Found');
                     throw new FundoNotesException('Label Not Found', 404);
@@ -106,6 +107,7 @@ class NoteController extends Controller
                         } elseif (isset($colours[$colour])) {
                             $colour = strtolower($request->colour);
                         } else {
+                            Log::info('Colour Not Specified in the List');
                             throw new FundoNotesException('Colour Not Specified in the List', 406);
                         }
                         $note_id = Note::createNotes($request, $user->id, $colours[$colour]);
@@ -114,6 +116,133 @@ class NoteController extends Controller
                         return response()->json([
                             'message' => 'Notes Created Successfully'
                         ], 201);
+                    }
+                }
+            }
+        } catch (FundoNotesException $exception) {
+            return response()->json([
+                'message' => $exception->message()
+            ], $exception->statusCode());
+        }
+    }
+
+    /**
+     *   @OA\Post(
+     *   path="/api/updateNoteById",
+     *   summary="update note",
+     *   description="update user note",
+     *   @OA\RequestBody(
+     *         @OA\JsonContent(),
+     *         @OA\MediaType(
+     *            mediaType="multipart/form-data",
+     *            @OA\Schema(
+     *               type="object",
+     *               required={"id","title","description"},
+     *               @OA\Property(property="id", type="integer"),
+     *               @OA\Property(property="title", type="string"),
+     *               @OA\Property(property="description", type="string"),
+     *               @OA\Property(property="label_id", type="integer"),  
+     *               @OA\Property(property="pin", type="boolean"),  
+     *               @OA\Property(property="archive", type="boolean"),  
+     *               @OA\Property(property="colour")
+     *            ),
+     *        ),
+     *    ),
+     *   @OA\Response(response=201, description="Note Updated Successfully"),
+     *   @OA\Response(response=204, description="Label Not Found"),
+     *   @OA\Response(response=401, description="Invalid Authorization Token"),
+     *   @OA\Response(response=403, description="This Note Already Have This Label"),
+     *   @OA\Response(response=404, description="Notes Not Found"),
+     *   @OA\Response(response=406, description="Colour Not Specified in the List"),
+     *   @OA\Response(response=409, description="Pin and Archive Cannot be True at the Same Time"),
+     *   security={
+     *       {"Bearer": {}}
+     *     }
+     * )
+     * 
+     * This function takes the User authorization token and
+     * Note Id which user wants to update and 
+     * finds the note id if it is existed or not. 
+     * If so, updates it successfully.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateNoteById(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'id' => 'required|integer',
+                'title' => 'required|string|min:3|max:30',
+                'description' => 'required|string|min:3|max:100',
+                'label_id' => 'required|integer',
+                'pin' => 'boolean',
+                'archive' => 'boolean',
+                'colour' => ''
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['error' => $validator->errors()], 400);;
+            }
+
+            $id = $request->only('id');
+            $user = JWTAuth::parseToken()->authenticate();
+
+            if (!$user) {
+                Log::error('Invalid Authorization Token');
+                throw new FundoNotesException('Invalid Authorization Token', 401);
+            } else {
+                $notes = Note::getNotesByNoteIdandUserId($id, $user->id);
+                if (!$notes) {
+                    Log::error('Notes Not Found');
+                    throw new FundoNotesException('Notes Not Found', 404);
+                } else {
+                    $label = Label::getLabelByLabelIdandUserId($request->label_id, $user->id);
+                    if (!$label) {
+                        Log::error('Label Not Found');
+                        throw new FundoNotesException('Label Not Found', 204);
+                    } else {
+                        $labelnote = LabelNotes::getLabelNotesbyLabelIdNoteIdandUserId($request->label_id, $request->id, $user->id);
+                        if ($labelnote) {
+                            Log::error('This Note Already Have This Label');
+                            throw new FundoNotesException('This Note Already Have This Label', 403);
+                        } else {
+                            if ($request->pin == true && $request->archive == true) {
+                                Log::error('Pin and Archive Cannot be True at the Same Time');
+                                throw new FundoNotesException('Pin and Archive Cannot be True at the Same Time', 409);
+                            } else {
+                                $colours  =  array(
+                                    'white' => 'rgb(255,255,255)',
+                                    'red' => 'rgb(255,0,0)',
+                                    'orange' => 'rgb(255,165,0)',
+                                    'green' => 'rgb(0,255,0)',
+                                    'teal' => 'rgb(0,128,128)',
+                                    'blue' => 'rgb(0,0,255)',
+                                    'darkblue' => 'rgb(0,0,139)',
+                                    'purple' => 'rgb(128,0,128)',
+                                    'pink' => 'rgb(255,192,203)',
+                                    'brown' => 'rgb(165,42,42)',
+                                    'yellow' => 'rgb(255,255,0)',
+                                    'gray' => 'rgb(128,128,128)',
+                                );
+                                $colour = strtolower($request->colour);
+                                if ($request->colour == '') {
+                                    $colour = "white";
+                                } elseif (isset($colours[$colour])) {
+                                    $colour = strtolower($request->colour);
+                                } else {
+                                    Log::info('Colour Not Specified in the List');
+                                    throw new FundoNotesException('Colour Not Specified in the List', 406);
+                                }
+                                LabelNotes::createNoteandLabel($request->id, $request->label_id, $user->id);
+                                $notes = Note::updateNote($notes, $request, $user->id, $colours[$colour]);
+                                Log::info('Notes Updated Successfully');
+                                if ($notes) {
+                                    return response()->json([
+                                        'message' => 'Note Updated Successfully'
+                                    ], 201);
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -136,13 +265,14 @@ class NoteController extends Controller
      *            @OA\Schema(
      *               type="object",
      *               required={"id"},
-     *               @OA\Property(property="id", type="integer"),
+     *               @OA\Property(property="id", type="integer")
      *            ),
      *        ),
      * ),
      *   @OA\Response(response=200, description="Notes Fetched Successfully"),
      *   @OA\Response(response=404, description="Notes Not Found"),
      * )
+     * 
      * This function takes authorization token and note id and finds
      * if there is any note existing on that User id and note id 
      * if exist, it successfully fetch the data and print
@@ -190,6 +320,7 @@ class NoteController extends Controller
      *       {"Bearer": {}}
      *   }
      * )
+     * 
      * This function takes authorization token and finds
      * if there is any note existing on that User id and
      * it successfully fetch the notes and print
@@ -224,79 +355,6 @@ class NoteController extends Controller
     }
 
     /**
-     *   @OA\Post(
-     *   path="/api/updateNoteById",
-     *   summary="update note",
-     *   description="update user note",
-     *   @OA\RequestBody(
-     *         @OA\JsonContent(),
-     *         @OA\MediaType(
-     *            mediaType="multipart/form-data",
-     *            @OA\Schema(
-     *               type="object",
-     *               required={"id","title","description"},
-     *               @OA\Property(property="id", type="integer"),
-     *               @OA\Property(property="title", type="string"),
-     *               @OA\Property(property="description", type="string"),
-     *            ),
-     *        ),
-     *    ),
-     *   @OA\Response(response=201, description="Note Updated Successfully"),
-     *   @OA\Response(response=401, description="Invalid Authorization Token"),
-     *   @OA\Response(response=404, description="Notes Not Found"),
-     *   security={
-     *       {"Bearer": {}}
-     *     }
-     * )
-     * This function takes the User authorization token and
-     * Note Id which user wants to update and 
-     * finds the note id if it is existed or not. 
-     * If so, updates it successfully.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function updateNoteById(Request $request)
-    {
-        try {
-            $validator = Validator::make($request->all(), [
-                'id' => 'required|integer',
-                'title' => 'required|string|min:3|max:30',
-                'description' => 'required|string|min:3|max:100'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json(['error' => $validator->errors()], 400);;
-            }
-
-            $id = $request->only('id');
-            $currentUser = JWTAuth::parseToken()->authenticate();
-
-            if (!$currentUser) {
-                Log::error('Invalid Authorization Token');
-                throw new FundoNotesException('Invalid Authorization Token', 401);
-            } else {
-                $notes = Note::getNotesByNoteIdandUserId($id, $currentUser->id);
-                if (!$notes) {
-                    Log::error('Notes Not Found');
-                    throw new FundoNotesException('Notes Not Found', 404);
-                } else {
-                    $notes = Note::updateNote($notes, $request, $currentUser->id);
-                    Log::info('Notes Updated Successfully');
-                    if ($notes) {
-                        return response()->json([
-                            'message' => 'Note Updated Successfully'
-                        ], 201);
-                    }
-                }
-            }
-        } catch (FundoNotesException $exception) {
-            return response()->json([
-                'message' => $exception->message()
-            ], $exception->statusCode());
-        }
-    }
-
-    /**
      *   @OA\post(
      *   path="/api/deleteNoteById",
      *   summary="Delete Note",
@@ -308,7 +366,7 @@ class NoteController extends Controller
      *            @OA\Schema(
      *               type="object",
      *               required={"id"},
-     *               @OA\Property(property="id", type="integer"),
+     *               @OA\Property(property="id", type="integer")
      *            ),
      *        ),
      *    ),
@@ -319,6 +377,7 @@ class NoteController extends Controller
      *       {"Bearer": {}}
      *     }
      * )
+     * 
      * This function takes User authorization token and note id.
      * Finds which user wants to delete and 
      * Finds the note id if it is existed or not.
@@ -377,7 +436,7 @@ class NoteController extends Controller
      *               type="object",
      *               required={"label_id","note_id"},
      *               @OA\Property(property="label_id", type="integer"),
-     *               @OA\Property(property="note_id", type="integer"),
+     *               @OA\Property(property="note_id", type="integer")
      *            ),
      *        ),
      *    ),
@@ -420,7 +479,7 @@ class NoteController extends Controller
                     Log::error('Note or Label Not Found');
                     throw new FundoNotesException('Notes or Label Not Found', 404);
                 } else {
-                    $labelnote = LabelNotes::getLabelNotesbyLabelIdNoteIdandUserId($request, $user->id);
+                    $labelnote = LabelNotes::getLabelNotesbyLabelIdNoteIdandUserId($request->label_id, $request->note_id, $user->id);
                     if ($labelnote) {
                         Log::info('Note Already Have This Label');
                         throw new FundoNotesException('Note Already Have This Label', 409);
@@ -453,7 +512,7 @@ class NoteController extends Controller
      *               type="object",
      *               required={"label_id","note_id"},
      *               @OA\Property(property="label_id", type="integer"),
-     *               @OA\Property(property="note_id", type="integer"),
+     *               @OA\Property(property="note_id", type="integer")
      *            ),
      *        ),
      *    ),
@@ -489,7 +548,7 @@ class NoteController extends Controller
                 Log::error('Invalid Authorization Token');
                 throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
-                $labelnote = LabelNotes::getLabelNotesbyLabelIdNoteIdandUserId($request, $user->id);
+                $labelnote = LabelNotes::getLabelNotesbyLabelIdNoteIdandUserId($request->label_id, $request->note_id, $user->id);
                 if (!$labelnote) {
                     Log::error('LabelNotes Not Found With These Credentials');
                     throw new FundoNotesException('LabelNotes Not Found With These Credentials', 404);
@@ -497,8 +556,8 @@ class NoteController extends Controller
                     $labelnote->delete($labelnote->id);
                     Log::info('Label Note Successfully Deleted');
                     return response()->json([
-                        'status' => 201,
-                        'message' => 'Label Note Successfully Deleted'
+                        'message' => 'Label Note Successfully Deleted',
+                        'NoteLabel' => $labelnote
                     ], 201);
                 }
             }
@@ -521,7 +580,7 @@ class NoteController extends Controller
      *            @OA\Schema(
      *               type="object",
      *               required={"id"},
-     *               @OA\Property(property="id", type="integer"),
+     *               @OA\Property(property="id", type="integer")
      *            ),
      *        ),
      *    ),
@@ -596,7 +655,7 @@ class NoteController extends Controller
      *            @OA\Schema(
      *               type="object",
      *               required={"id"},
-     *               @OA\Property(property="id", type="integer"),
+     *               @OA\Property(property="id", type="integer")
      *            ),
      *        ),
      *    ),
@@ -660,12 +719,10 @@ class NoteController extends Controller
      *   path="/api/getAllPinnedNotes",
      *   summary="Display All Pinned Notes",
      *   description=" Display All Pinned Notes",
-     *   @OA\RequestBody(
-     *
-     *    ),
+     *   @OA\RequestBody(),
      *   @OA\Response(response=404, description="Notes Not Found"),
      *   @OA\Response(response=401, description="Invalid Authorization Token"),
-     *   @OA\Response(response=201, description="Fetched All Pinned Notes Successfully"),
+     *   @OA\Response(response=200, description="Fetched All Pinned Notes Successfully"),
      *   security = {
      *      {"Bearer" : {}}
      *   }
@@ -693,7 +750,7 @@ class NoteController extends Controller
                 return response()->json([
                     'message' => 'Fetched All Pinned Notes Successfully',
                     'notes' => $userNotes
-                ], 201);
+                ], 200);
             }
         } catch (FundoNotesException $exception) {
             return response()->json([
@@ -714,7 +771,7 @@ class NoteController extends Controller
      *            @OA\Schema(
      *               type="object",
      *               required={"id"},
-     *               @OA\Property(property="id", type="integer"),
+     *               @OA\Property(property="id", type="integer")
      *            ),
      *        ),
      *    ),
@@ -789,7 +846,7 @@ class NoteController extends Controller
      *            @OA\Schema(
      *               type="object",
      *               required={"id"},
-     *               @OA\Property(property="id", type="integer"),
+     *               @OA\Property(property="id", type="integer")
      *            ),
      *        ),
      *    ),
@@ -853,12 +910,10 @@ class NoteController extends Controller
      *   path="/api/getAllArchivedNotes",
      *   summary="Display All Archived Notes",
      *   description=" Display All Archived Notes",
-     *   @OA\RequestBody(
-     *
-     *    ),
+     *   @OA\RequestBody(),
      *   @OA\Response(response=404, description="Notes Not Found"),
      *   @OA\Response(response=401, description="Invalid Authorization Token"),
-     *   @OA\Response(response=201, description="Fetched All Archived Notes Successfully"),
+     *   @OA\Response(response=200, description="Fetched All Archived Notes Successfully"),
      *   security = {
      *      {"Bearer" : {}}
      *   }
@@ -886,7 +941,7 @@ class NoteController extends Controller
                 return response()->json([
                     'message' => 'Fetched All Archived Notes Successfully',
                     'notes' => $userNotes
-                ], 201);
+                ], 200);
             }
         } catch (FundoNotesException $exception) {
             return response()->json([
@@ -894,7 +949,7 @@ class NoteController extends Controller
             ], $exception->statusCode());
         }
     }
-    
+
     /**
      * @OA\Post(
      *   path="/api/colourNoteById",
@@ -908,7 +963,7 @@ class NoteController extends Controller
      *               type="object",
      *               required={"id" , "colour"},
      *               @OA\Property(property="id", type="integer"),
-     *               @OA\Property(property="colour", type="string"),
+     *               @OA\Property(property="colour", type="string")
      *            ),
      *        ),
      *    ),
@@ -917,8 +972,8 @@ class NoteController extends Controller
      *   @OA\Response(response=404, description="Notes Not Found"),
      *   @OA\Response(response=406, description="Colour Not Specified in the List"),
      *   security = {
-     * {
-     * "Bearer" : {}}}
+     *      {"Bearer" : {}}
+     *   }
      * )
      * 
      * This function takes the User access token and 

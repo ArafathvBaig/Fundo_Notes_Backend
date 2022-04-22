@@ -144,7 +144,7 @@
                         "description": "Invalid authorization token"
                     },
                     "404": {
-                        "description": "Notes Not Found"
+                        "description": "Labels Not Found"
                     }
                 },
                 "security": [
@@ -313,6 +313,79 @@
                 ]
             }
         },
+        "/api/updateNoteById": {
+            "post": {
+                "summary": "update note",
+                "description": "update user note",
+                "operationId": "a11e25c459bae96f3c862f767bfb8430",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "id",
+                                    "title",
+                                    "description"
+                                ],
+                                "properties": {
+                                    "id": {
+                                        "type": "integer"
+                                    },
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "label_id": {
+                                        "type": "integer"
+                                    },
+                                    "pin": {
+                                        "type": "boolean"
+                                    },
+                                    "archive": {
+                                        "type": "boolean"
+                                    },
+                                    "colour": {}
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {}
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Note Updated Successfully"
+                    },
+                    "204": {
+                        "description": "Label Not Found"
+                    },
+                    "401": {
+                        "description": "Invalid Authorization Token"
+                    },
+                    "403": {
+                        "description": "This Note Already Have This Label"
+                    },
+                    "404": {
+                        "description": "Notes Not Found"
+                    },
+                    "406": {
+                        "description": "Colour Not Specified in the List"
+                    },
+                    "409": {
+                        "description": "Pin and Archive Cannot be True at the Same Time"
+                    }
+                },
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ]
+            }
+        },
         "/api/displayNoteById": {
             "get": {
                 "summary": "Display Note",
@@ -363,57 +436,6 @@
                     },
                     "401": {
                         "description": "Invalid Authorization Token"
-                    }
-                },
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ]
-            }
-        },
-        "/api/updateNoteById": {
-            "post": {
-                "summary": "update note",
-                "description": "update user note",
-                "operationId": "a11e25c459bae96f3c862f767bfb8430",
-                "requestBody": {
-                    "content": {
-                        "multipart/form-data": {
-                            "schema": {
-                                "required": [
-                                    "id",
-                                    "title",
-                                    "description"
-                                ],
-                                "properties": {
-                                    "id": {
-                                        "type": "integer"
-                                    },
-                                    "title": {
-                                        "type": "string"
-                                    },
-                                    "description": {
-                                        "type": "string"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        },
-                        "application/json": {
-                            "schema": {}
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Note Updated Successfully"
-                    },
-                    "401": {
-                        "description": "Invalid Authorization Token"
-                    },
-                    "404": {
-                        "description": "Notes Not Found"
                     }
                 },
                 "security": [
@@ -668,7 +690,7 @@
                     "401": {
                         "description": "Invalid Authorization Token"
                     },
-                    "201": {
+                    "200": {
                         "description": "Fetched All Pinned Notes Successfully"
                     }
                 },
@@ -784,7 +806,7 @@
                     "401": {
                         "description": "Invalid Authorization Token"
                     },
-                    "201": {
+                    "200": {
                         "description": "Fetched All Archived Notes Successfully"
                     }
                 },

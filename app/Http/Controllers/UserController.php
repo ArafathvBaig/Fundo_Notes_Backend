@@ -55,21 +55,20 @@ class UserController extends Controller
                 'password' => 'required|string|min:6|max:50',
                 'password_confirmation' => 'required|same:password'
             ]);
-
-            if ($validator->fails()) {
-                return response()->json([$validator->errors()], 400);
-            }
-
+            
             $user = User::getUserByEmail($request->email);
             if ($user) {
                 Log::info('The email has already been taken: ' . $user->email);
                 throw new FundoNotesException('The email has already been taken.', 401);
             }
+
+            if ($validator->fails()) {
+                return response()->json([$validator->errors()], 400);
+            }
             
             User::createUser($request);
             Log::info('User Successfully Registered.');
             return response()->json([
-                'status' => 201,
                 'message' => 'User Successfully Registered'
             ], 201);
         } catch (FundoNotesException $exception) {
@@ -92,7 +91,7 @@ class UserController extends Controller
      *              type="object",
      *              required={"email","password"},
      *              @OA\Property(property="email", type="email"),
-     *              @OA\Property(property="password", type="string"),
+     *              @OA\Property(property="password", type="string")
      *          ),  
      *      ),
      *  ),

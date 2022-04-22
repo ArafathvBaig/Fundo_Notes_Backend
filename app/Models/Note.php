@@ -63,6 +63,32 @@ class Note extends Model
     }
 
     /**
+     * Function to update the note
+     * Passing the notes, user_id and credentials to update
+     * 
+     * @return mixed
+     */
+    public static function updateNote($notes, $request, $user_id, $colour)
+    {
+        //$notes->id = $request->id;
+        $notes->user_id = $user_id;
+        $notes->title = $request->title;
+        $notes->description = $request->description;
+        if ($request->pin == true) {
+            $notes->pin = 1;
+        } else{
+            $notes->pin = 0;
+        }
+        if ($request->archive == true) {
+            $notes->archive = 1;
+        } else {
+            $notes->archive = 0;
+        }
+        $notes->colour = $colour;
+        return $notes->update();
+    }
+
+    /**
      * Function to get Note by Note_Id
      * Passing the Note_id as the parameter
      * 
@@ -96,21 +122,6 @@ class Note extends Model
     {
         $notes = Note::where('id', $id)->where('user_id', $user_id)->first();
         return $notes;
-    }
-
-    /**
-     * Function to update the note
-     * Passing the notes, user_id and credentials to update
-     * 
-     * @return mixed
-     */
-    public static function updateNote($notes, $request, $user_id)
-    {
-        //$notes->id = $request->id;
-        $notes->user_id = $user_id;
-        $notes->title = $request->title;
-        $notes->description = $request->description;
-        return $notes->update();
     }
 
     /**
