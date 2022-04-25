@@ -11,7 +11,7 @@ class LabelControllerTest extends TestCase
     protected static $token;
     public static function setUpBeforeClass(): void
     {
-        self::$token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9sb2NhbGhvc3Q6ODAwMFwvYXBpXC9sb2dpbiIsImlhdCI6MTY1MDAxODQ5NywiZXhwIjoxNjUwMDIyMDk3LCJuYmYiOjE2NTAwMTg0OTcsImp0aSI6InpBREQyaDFvSmRVREpTMG8iLCJzdWIiOjQsInBydiI6IjIzYmQ1Yzg5NDlmNjAwYWRiMzllNzAxYzQwMDg3MmRiN2E1OTc2ZjcifQ.En6FPHOHLjfdMoX1o7f_KtJ-0-uiMNvfajAo_TwywLU";
+        self::$token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9sb2NhbGhvc3Q6ODAwMFwvYXBpXC9sb2dpbiIsImlhdCI6MTY1MDkwMjg3NywiZXhwIjoxNjUwOTA2NDc3LCJuYmYiOjE2NTA5MDI4NzcsImp0aSI6IkE5ZjJocTNRUWp5TTNKQ00iLCJzdWIiOjEsInBydiI6IjIzYmQ1Yzg5NDlmNjAwYWRiMzllNzAxYzQwMDg3MmRiN2E1OTc2ZjcifQ.ru6jr674g0ZQoSKUJsOfMqFiuoLKaJapV_dQPEURF3o";
     }
 
     /**
@@ -64,7 +64,7 @@ class LabelControllerTest extends TestCase
             'Content-Type' => 'Application/json',
         ])
             ->json('POST', '/api/updateLabel', [
-                'id' => '7',
+                'id' => '14',
                 'labelname' => 'Office Work',
                 "token" => self::$token
             ]);
@@ -84,7 +84,7 @@ class LabelControllerTest extends TestCase
             'Content-Type' => 'Application/json',
         ])
             ->json('POST', '/api/updateLabel', [
-                'id' => '7',
+                'id' => '14',
                 'labelname' => 'Office Work',
                 "token" => self::$token
             ]);
@@ -102,10 +102,10 @@ class LabelControllerTest extends TestCase
             'Content-Type' => 'Application/json',
         ])
             ->json('POST', '/api/deleteLabel', [
-                "id" => "7",
+                "id" => "14",
                 "token" => self::$token
             ]);
-        $response->assertStatus(201)->assertJson(['message' => 'Label Successfully Deleted']);
+        $response->assertStatus(200)->assertJson(['message' => 'Label Successfully Deleted']);
     }
 
     /**
@@ -121,7 +121,7 @@ class LabelControllerTest extends TestCase
             'Content-Type' => 'Application/json',
         ])
             ->json('POST', '/api/deleteLabel', [
-                "id" => "55",
+                "id" => "14",
                 "token" => self::$token
             ]);
         $response->assertStatus(404)->assertJson(['message' => 'Label Not Found']);

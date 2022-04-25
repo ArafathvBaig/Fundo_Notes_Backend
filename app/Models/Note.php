@@ -49,12 +49,10 @@ class Note extends Model
         $note->title = $request->title;
         $note->description = $request->description;
         $note->user_id = $user_id;
-        if($request->pin == true)
-        {
+        if ($request->pin == "1") {
             $note->pin = 1;
         }
-        if($request->archive == true)
-        {
+        if ($request->archive == "1") {
             $note->archive = 1;
         }
         $note->colour = $colour;
@@ -74,12 +72,12 @@ class Note extends Model
         $notes->user_id = $user_id;
         $notes->title = $request->title;
         $notes->description = $request->description;
-        if ($request->pin == true) {
+        if ($request->pin == "1") {
             $notes->pin = 1;
-        } else{
+        } else {
             $notes->pin = 0;
         }
-        if ($request->archive == true) {
+        if ($request->archive == "1") {
             $notes->archive = 1;
         } else {
             $notes->archive = 0;
@@ -147,7 +145,7 @@ class Note extends Model
      */
     public static function getPinnedNotes($user)
     {
-        $notes = Note::where('user_id', $user->id)->where('pin',1)->get();
+        $notes = Note::where('user_id', $user->id)->where('pin', 1)->get();
 
         return $notes;
     }
@@ -190,9 +188,9 @@ class Note extends Model
     public static function getArchivedNotesandItsLabels($user)
     {
         $notes = Note::leftJoin('label_notes', 'label_notes.note_id', '=', 'notes.id')
-        ->leftJoin('labels', 'labels.id', '=', 'label_notes.label_id')
-        ->select('notes.id', 'notes.title', 'notes.description', 'notes.pin', 'notes.archive', 'notes.colour', 'labels.labelname')
-        ->where([['notes.user_id', '=', $user->id], ['archive', '=', 1]])->paginate(4);
+            ->leftJoin('labels', 'labels.id', '=', 'label_notes.label_id')
+            ->select('notes.id', 'notes.title', 'notes.description', 'notes.pin', 'notes.archive', 'notes.colour', 'labels.labelname')
+            ->where([['notes.user_id', '=', $user->id], ['archive', '=', 1]])->paginate(4);
 
         return $notes;
     }

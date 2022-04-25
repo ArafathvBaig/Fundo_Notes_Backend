@@ -11,7 +11,7 @@ class NoteControllerTest extends TestCase
     protected static $token;
     public static function setUpBeforeClass(): void
     {
-        self::$token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9sb2NhbGhvc3Q6ODAwMFwvYXBpXC9sb2dpbiIsImlhdCI6MTY1MDAxODQ5NywiZXhwIjoxNjUwMDIyMDk3LCJuYmYiOjE2NTAwMTg0OTcsImp0aSI6InpBREQyaDFvSmRVREpTMG8iLCJzdWIiOjQsInBydiI6IjIzYmQ1Yzg5NDlmNjAwYWRiMzllNzAxYzQwMDg3MmRiN2E1OTc2ZjcifQ.En6FPHOHLjfdMoX1o7f_KtJ-0-uiMNvfajAo_TwywLU";
+        self::$token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9sb2NhbGhvc3Q6ODAwMFwvYXBpXC9sb2dpbiIsImlhdCI6MTY1MDkwMDc3MSwiZXhwIjoxNjUwOTA0MzcxLCJuYmYiOjE2NTA5MDA3NzEsImp0aSI6Ikt5c2l5dHVwaVlHSnYwOHIiLCJzdWIiOjEsInBydiI6IjIzYmQ1Yzg5NDlmNjAwYWRiMzllNzAxYzQwMDg3MmRiN2E1OTc2ZjcifQ.ahpt4EJWkMVX_c1Qf_CUrFYYHBQ6uCU86yknjQmbrwA";
     }
 
     /**
@@ -29,6 +29,10 @@ class NoteControllerTest extends TestCase
             ->json('POST', '/api/createNote', [
                 "title" => "Work",
                 "description" => "Do the Work",
+                "label_id" => "12",
+                "pin" => "0",
+                "archive" => "0",
+                "colour" => "red",
                 "token" => self::$token
             ]);
         $response->assertStatus(201)->assertJson(['message' => 'Notes Created Successfully']);
@@ -50,9 +54,13 @@ class NoteControllerTest extends TestCase
             ->json('POST', '/api/createNote', [
                 "title" => "Work",
                 "description" => "Do the Work",
-                "token" => '1234567890'
+                "label_id" => "-5",
+                "pin" => "1",
+                "archive" => "0",
+                "colour" => "red",
+                "token" => self::$token
             ]);
-        $response->assertStatus(400)->assertJson(['message' => 'Wrong number of segments']);
+        $response->assertStatus(400)->assertJson(['message' => 'Invalid Label Id']);
     }
 
     /**
@@ -67,9 +75,13 @@ class NoteControllerTest extends TestCase
             'Content-Type' => 'Application/json',
         ])
             ->json('POST', '/api/updateNoteById', [
-                "id" => "3",
+                "id" => "80",
                 "title" => "Expence",
                 "description" => "Write Down Your Expences",
+                "label_id" => "12",
+                "pin" => "1",
+                "archive" => "0",
+                "colour" => "red",
                 "token" => self::$token
             ]);
         $response->assertStatus(201)->assertJson(['message' => 'Note Updated Successfully']);
@@ -88,9 +100,13 @@ class NoteControllerTest extends TestCase
             'Content-Type' => 'Application/json',
         ])
             ->json('POST', '/api/updateNoteById', [
-                "id" => "50",
+                "id" => "2",
                 "title" => "Expence",
                 "description" => "Write Down Your Expences",
+                "label_id" => "12",
+                "pin" => "1",
+                "archive" => "0",
+                "colour" => "red",
                 "token" => self::$token
             ]);
         $response->assertStatus(404)->assertJson(['message' => 'Notes Not Found']);
@@ -108,10 +124,10 @@ class NoteControllerTest extends TestCase
             'Content-Type' => 'Application/json',
         ])
             ->json('POST', '/api/deleteNoteById', [
-                "id" => "10",
+                "id" => "80",
                 "token" => self::$token
             ]);
-        $response->assertStatus(201)->assertJson(['message' => 'Note Deleted Successfully']);
+        $response->assertStatus(200)->assertJson(['message' => 'Note Deleted Successfully']);
     }
 
     /**
@@ -127,7 +143,7 @@ class NoteControllerTest extends TestCase
             'Content-Type' => 'Application/json',
         ])
             ->json('POST', '/api/deleteNoteById', [
-                "id" => "55",
+                "id" => "80",
                 "token" => self::$token
             ]);
         $response->assertStatus(404)->assertJson(['message' => 'Notes Not Found']);
@@ -145,8 +161,8 @@ class NoteControllerTest extends TestCase
             'Content-Type' => 'Application/json',
         ])
             ->json('POST', '/api/addNoteLabel', [
-                'label_id' => '1',
-                'note_id' => '10',
+                'label_id' => '13',
+                'note_id' => '81',
                 "token" => self::$token
             ]);
         $response->assertStatus(201)->assertJson(['message' => 'LabelNote Added Successfully']);
@@ -166,8 +182,8 @@ class NoteControllerTest extends TestCase
             'Content-Type' => 'Application/json',
         ])
             ->json('POST', '/api/addNoteLabel', [
-                'label_id' => '1',
-                'note_id' => '10',
+                'label_id' => '13',
+                'note_id' => '81',
                 "token" => self::$token
             ]);
         $response->assertStatus(409)->assertJson(['message' => 'Note Already Have This Label']);
@@ -185,11 +201,11 @@ class NoteControllerTest extends TestCase
             'Content-Type' => 'Application/json',
         ])
             ->json('POST', '/api/deleteNoteLabel', [
-                'label_id' => '1',
-                'note_id' => '10',
+                'label_id' => '12',
+                'note_id' => '81',
                 "token" => self::$token
             ]);
-        $response->assertStatus(201)->assertJson(['message' => 'Label Note Successfully Deleted']);
+        $response->assertStatus(200)->assertJson(['message' => 'Label Note Successfully Deleted']);
     }
 
     /**
@@ -206,10 +222,197 @@ class NoteControllerTest extends TestCase
             'Content-Type' => 'Application/json',
         ])
             ->json('POST', '/api/deleteNoteLabel', [
-                'label_id' => '1',
-                'note_id' => '10',
+                'label_id' => '12',
+                'note_id' => '81',
                 "token" => self::$token
             ]);
         $response->assertStatus(404)->assertJson(['message' => 'LabelNotes Not Found With These Credentials']);
+    }
+
+    /**
+     * Successful Pin Note by ID Test
+     * Pin Note by ID Using note_id and authorization token
+     * 
+     * @test
+     */
+    public function successfulPinNoteByIdTest()
+    {
+        $response = $this->withHeaders([
+            'Content-Type' => 'Application/json',
+        ])
+            ->json('POST', '/api/pinNoteById', [
+                'id' => '81',
+                "token" => self::$token
+            ]);
+        $response->assertStatus(201)->assertJson(['message' => 'Note Pinned Successfully']);
+    }
+
+    /**
+     * UnSuccessful Pin Note by ID Test
+     * Pin Note by ID Using note_id and authorization token
+     * Using Wrong Credentials for UnSuccessful Test
+     * 
+     * @test
+     */
+    public function unSuccessfulPinNoteByIdTest()
+    {
+        $response = $this->withHeaders([
+            'Content-Type' => 'Application/json',
+        ])
+            ->json('POST', '/api/pinNoteById', [
+                'id' => '81',
+                "token" => self::$token
+            ]);
+        $response->assertStatus(409)->assertJson(['message' => 'Note Already Pinned']);
+    }
+
+    /**
+     * Successful UnPin Note by ID Test
+     * UnPin Note by ID Using note_id and authorization token
+     * 
+     * @test
+     */
+    public function successfulUnPinNoteByIdTest()
+    {
+        $response = $this->withHeaders([
+            'Content-Type' => 'Application/json',
+        ])
+            ->json('POST', '/api/unPinNoteById', [
+                'id' => '81',
+                "token" => self::$token
+            ]);
+        $response->assertStatus(201)->assertJson(['message' => 'Note UnPinned Successfully']);
+    }
+
+    /**
+     * UnSuccessful UnPin Note by ID Test
+     * UnPin Note by ID Using note_id and authorization token
+     * Using Wrong Credentials for UnSuccessful Test
+     * 
+     * @test
+     */
+    public function unSuccessfulUnPinNoteByIdTest()
+    {
+        $response = $this->withHeaders([
+            'Content-Type' => 'Application/json',
+        ])
+            ->json('POST', '/api/unPinNoteById', [
+                'id' => '81',
+                "token" => self::$token
+            ]);
+        $response->assertStatus(409)->assertJson(['message' => 'Note Already UnPinned']);
+    }
+
+    /**
+     * Successful Archive Note by ID Test
+     * Archive Note by ID Using note_id and authorization token
+     * 
+     * @test
+     */
+    public function successfulArchiveNoteByIdTest()
+    {
+        $response = $this->withHeaders([
+            'Content-Type' => 'Application/json',
+        ])
+            ->json('POST', '/api/archiveNoteById', [
+                'id' => '81',
+                "token" => self::$token
+            ]);
+        $response->assertStatus(201)->assertJson(['message' => 'Note Archived Successfully']);
+    }
+
+    /**
+     * UnSuccessful Archive Note by ID Test
+     * Archive Note by ID Using note_id and authorization token
+     * Using Wrong Credentials for UnSuccessful Test
+     * 
+     * @test
+     */
+    public function unSuccessfulArchiveNoteByIdTest()
+    {
+        $response = $this->withHeaders([
+            'Content-Type' => 'Application/json',
+        ])
+            ->json('POST', '/api/archiveNoteById', [
+                'id' => '81',
+                "token" => self::$token
+            ]);
+        $response->assertStatus(409)->assertJson(['message' => 'Note Already Archived']);
+    }
+
+    /**
+     * Successful UnArchive Note by ID Test
+     * UnArchive Note by ID Using note_id and authorization token
+     * 
+     * @test
+     */
+    public function successfulUnArchivedNoteByIdTest()
+    {
+        $response = $this->withHeaders([
+            'Content-Type' => 'Application/json',
+        ])
+            ->json('POST', '/api/unArchiveNoteById', [
+                'id' => '81',
+                "token" => self::$token
+            ]);
+        $response->assertStatus(201)->assertJson(['message' => 'Note UnArchived Successfully']);
+    }
+
+    /**
+     * UnSuccessful UnArchive Note by ID Test
+     * UnArchive Note by ID Using note_id and authorization token
+     * Using Wrong Credentials for UnSuccessful Test
+     * 
+     * @test
+     */
+    public function unSuccessfulUnArchiveNoteByIdTest()
+    {
+        $response = $this->withHeaders([
+            'Content-Type' => 'Application/json',
+        ])
+            ->json('POST', '/api/unArchiveNoteById', [
+                'id' => '81',
+                "token" => self::$token
+            ]);
+        $response->assertStatus(409)->assertJson(['message' => 'Note Already UnArchived']);
+    }
+
+    /**
+     * Successful Colour Note by ID Test
+     * Colour Note by ID Using note_id, colour and authorization token
+     * 
+     * @test
+     */
+    public function successfulColourNoteByIdTest()
+    {
+        $response = $this->withHeaders([
+            'Content-Type' => 'Application/json',
+        ])
+            ->json('POST', '/api/colourNoteById', [
+                'id' => '81',
+                "colour" => "blue",
+                "token" => self::$token
+            ]);
+        $response->assertStatus(201)->assertJson(['message' => 'Note Coloured Sucessfully']);
+    }
+
+    /**
+     * UnSuccessful Colour Note by ID Test
+     * Colour Note by ID Using note_id, colour and authorization token
+     * Using Wrong Credentials for UnSuccessful Test
+     * 
+     * @test
+     */
+    public function unSuccessfulColourNoteByIdTest()
+    {
+        $response = $this->withHeaders([
+            'Content-Type' => 'Application/json',
+        ])
+            ->json('POST', '/api/colourNoteById', [
+                'id' => '81',
+                "colour" => "black",
+                "token" => self::$token
+            ]);
+        $response->assertStatus(406)->assertJson(['message' => 'Colour Not Specified in the List']);
     }
 }

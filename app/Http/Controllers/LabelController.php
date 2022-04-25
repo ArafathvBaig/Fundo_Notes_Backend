@@ -117,20 +117,22 @@ class LabelController extends Controller
                 Log::error('Invalid Authorization Token');
                 throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
-                $label = Cache::remember('labels', 60 * 60 * 24, function () {
-                    return Label::where('user_id', Auth::user()->id)->get();
-                });
-                //$label = Label::getLabelsByUserId($user->id);
-                if (!$label) {
+                Cache::put('labels', Label::getLabelsByUserId($user->id), 60 * 60 * 24);
+                $labels = Cache::get('labels');
+
+                // $labels = Cache::remember('labels', 60 * 60 * 24, function () {
+                //     return Label::where('user_id', Auth::user()->id)->get();
+                // });
+
+                //$labels = Label::getLabelsByUserId($user->id);
+                if (!$labels) {
                     Log::error('Labels Not Found');
                     throw new FundoNotesException('Labels Not Found', 404);
                 } else {
-                    Cache::remember('labels');
-
                     Log::info('Labels Retrieved Successfully.');
                     return response()->json([
                         'message' => 'Labels Retrieved Successfully.',
-                        'Label' => $label
+                        'Label' => $labels
                     ], 201);
                 }
             }
@@ -200,7 +202,7 @@ class LabelController extends Controller
                         $label = Label::updateLabel($request->id, $request->labelname, $user->id);
 
                         Cache::forget('labels');
-                        Cache::forget('notess');
+                        Cache::forget('notes');
 
                         if ($label) {
                             Log::info('Label Updated Successfully');
@@ -240,7 +242,7 @@ class LabelController extends Controller
      *            ),
      *        ),
      *    ),
-     *   @OA\Response(response=201, description="Label Successfully Deleted"),
+     *   @OA\Response(response=200, description="Label Successfully Deleted"),
      *   @OA\Response(response=404, description="Label Not Found"),
      *   @OA\Response(response=401, description="Invalid Authorization Token"),
      *   security={
@@ -282,7 +284,7 @@ class LabelController extends Controller
                     Log::info('Label Successfully Deleted');
                     return response()->json([
                         'message' => 'Label Successfully Deleted'
-                    ], 201);
+                    ], 200);
                 }
             }
         } catch (FundoNotesException $exception) {

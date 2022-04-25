@@ -34,9 +34,9 @@ class NoteController extends Controller
      *               required={"title","description"},
      *               @OA\Property(property="title", type="string"),
      *               @OA\Property(property="description", type="string"),  
-     *               @OA\Property(property="label_id", type="integer"),  
-     *               @OA\Property(property="pin", type="boolean"),  
-     *               @OA\Property(property="archive", type="boolean"),  
+     *               @OA\Property(property="label_id"),  
+     *               @OA\Property(property="pin"),  
+     *               @OA\Property(property="archive"),  
      *               @OA\Property(property="colour")
      *            ),
      *        ),
@@ -63,9 +63,9 @@ class NoteController extends Controller
             $validator = Validator::make($request->all(), [
                 'title' => 'required|string|min:3|max:30',
                 'description' => 'required|string|min:3|max:1000',
-                'label_id' => 'required|integer',
-                'pin' => 'boolean',
-                'archive' => 'boolean',
+                'label_id' => '',
+                'pin' => '',
+                'archive' => '',
                 'colour' => ''
             ]);
 
@@ -79,44 +79,64 @@ class NoteController extends Controller
                 Log::error('Invalid Authorization Token');
                 throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
+                $pin = $request->pin;
+                $archive = $request->archive;
+
+                if ($pin != "0" && $pin != "1" && $pin != "") {
+                    Log::error('Invalid Input For Pin');
+                    throw new FundoNotesException("Invalid Input For Pin", 400);
+                }
+
+                if ($archive != "0" && $archive != "1" && $archive != "") {
+                    Log::error('Invalid Input For Archive');
+                    throw new FundoNotesException("Invalid Input For Archive", 400);
+                }
+
+                if ($pin == "1" && $archive == "1") {
+                    Log::error('Pin and Archive Cannot be True at the Same Time');
+                    throw new FundoNotesException('Pin and Archive Cannot be True at the Same Time', 409);
+                }
+
+                $colours  =  array(
+                    'white' => 'rgb(255,255,255)',
+                    'red' => 'rgb(255,0,0)',
+                    'orange' => 'rgb(255,165,0)',
+                    'green' => 'rgb(0,255,0)',
+                    'teal' => 'rgb(0,128,128)',
+                    'blue' => 'rgb(0,0,255)',
+                    'darkblue' => 'rgb(0,0,139)',
+                    'purple' => 'rgb(128,0,128)',
+                    'pink' => 'rgb(255,192,203)',
+                    'brown' => 'rgb(165,42,42)',
+                    'yellow' => 'rgb(255,255,0)',
+                    'gray' => 'rgb(128,128,128)',
+                );
+                $colour = strtolower($request->colour);
+                if ($request->colour == '') {
+                    $colour = "white";
+                } elseif (isset($colours[$colour])) {
+                    $colour = strtolower($request->colour);
+                } else {
+                    Log::error('Colour Not Specified in the List');
+                    throw new FundoNotesException('Colour Not Specified in the List', 406);
+                }
+
                 $label = Label::getLabelByLabelIdandUserId($request->label_id, $user->id);
-                if (!$label) {
-                    Log::error('Label Not Found');
+                if ($label || $request->label_id == '') {
+                    $note_id = Note::createNotes($request, $user->id, $colours[$colour]);
+                    if ($label) {
+                        LabelNotes::createNoteandLabel($note_id, $request->label_id, $user->id);
+                    }
+                    Log::info('Notes Created Successfully For User::' . $user->id);
+                    return response()->json([
+                        'message' => 'Notes Created Successfully'
+                    ], 201);
+                } elseif ($request->label_id > 0) {
+                    Log::error('Label Not Found For User::' . $user->id);
                     throw new FundoNotesException('Label Not Found', 404);
                 } else {
-                    if ($request->pin == true && $request->archive == true) {
-                        throw new FundoNotesException('Pin and Archive Cannot be True at the Same Time', 409);
-                    } else {
-                        $colours  =  array(
-                            'white' => 'rgb(255,255,255)',
-                            'red' => 'rgb(255,0,0)',
-                            'orange' => 'rgb(255,165,0)',
-                            'green' => 'rgb(0,255,0)',
-                            'teal' => 'rgb(0,128,128)',
-                            'blue' => 'rgb(0,0,255)',
-                            'darkblue' => 'rgb(0,0,139)',
-                            'purple' => 'rgb(128,0,128)',
-                            'pink' => 'rgb(255,192,203)',
-                            'brown' => 'rgb(165,42,42)',
-                            'yellow' => 'rgb(255,255,0)',
-                            'gray' => 'rgb(128,128,128)',
-                        );
-                        $colour = strtolower($request->colour);
-                        if ($request->colour == '') {
-                            $colour = "white";
-                        } elseif (isset($colours[$colour])) {
-                            $colour = strtolower($request->colour);
-                        } else {
-                            Log::info('Colour Not Specified in the List');
-                            throw new FundoNotesException('Colour Not Specified in the List', 406);
-                        }
-                        $note_id = Note::createNotes($request, $user->id, $colours[$colour]);
-                        LabelNotes::createNoteandLabel($note_id, $request->label_id, $user->id);
-                        Log::info('Notes Created Successfully For User::' . $user->id);
-                        return response()->json([
-                            'message' => 'Notes Created Successfully'
-                        ], 201);
-                    }
+                    Log::error('Invalid Label Id');
+                    throw new FundoNotesException('Invalid Label Id', 400);
                 }
             }
         } catch (FundoNotesException $exception) {
@@ -141,18 +161,16 @@ class NoteController extends Controller
      *               @OA\Property(property="id", type="integer"),
      *               @OA\Property(property="title", type="string"),
      *               @OA\Property(property="description", type="string"),
-     *               @OA\Property(property="label_id", type="integer"),  
-     *               @OA\Property(property="pin", type="boolean"),  
-     *               @OA\Property(property="archive", type="boolean"),  
+     *               @OA\Property(property="label_id"),  
+     *               @OA\Property(property="pin"),  
+     *               @OA\Property(property="archive"),  
      *               @OA\Property(property="colour")
      *            ),
      *        ),
      *    ),
      *   @OA\Response(response=201, description="Note Updated Successfully"),
-     *   @OA\Response(response=204, description="Label Not Found"),
      *   @OA\Response(response=401, description="Invalid Authorization Token"),
-     *   @OA\Response(response=403, description="This Note Already Have This Label"),
-     *   @OA\Response(response=404, description="Notes Not Found"),
+     *   @OA\Response(response=404, description="Label Not Found"),
      *   @OA\Response(response=406, description="Colour Not Specified in the List"),
      *   @OA\Response(response=409, description="Pin and Archive Cannot be True at the Same Time"),
      *   security={
@@ -174,9 +192,9 @@ class NoteController extends Controller
                 'id' => 'required|integer',
                 'title' => 'required|string|min:3|max:30',
                 'description' => 'required|string|min:3|max:100',
-                'label_id' => 'required|integer',
-                'pin' => 'boolean',
-                'archive' => 'boolean',
+                'label_id' => '',
+                'pin' => '',
+                'archive' => '',
                 'colour' => ''
             ]);
 
@@ -193,59 +211,71 @@ class NoteController extends Controller
             } else {
                 $notes = Note::getNotesByNoteIdandUserId($id, $user->id);
                 if (!$notes) {
-                    Log::error('Notes Not Found');
+                    Log::error('Notes Not Found For User:: ' . $user->id);
                     throw new FundoNotesException('Notes Not Found', 404);
                 } else {
-                    $label = Label::getLabelByLabelIdandUserId($request->label_id, $user->id);
-                    if (!$label) {
-                        Log::error('Label Not Found');
-                        throw new FundoNotesException('Label Not Found', 204);
-                    } else {
-                        $labelnote = LabelNotes::getLabelNotesbyLabelIdNoteIdandUserId($request->label_id, $request->id, $user->id);
-                        if ($labelnote) {
-                            Log::error('This Note Already Have This Label');
-                            throw new FundoNotesException('This Note Already Have This Label', 403);
-                        } else {
-                            if ($request->pin == true && $request->archive == true) {
-                                Log::error('Pin and Archive Cannot be True at the Same Time');
-                                throw new FundoNotesException('Pin and Archive Cannot be True at the Same Time', 409);
-                            } else {
-                                $colours  =  array(
-                                    'white' => 'rgb(255,255,255)',
-                                    'red' => 'rgb(255,0,0)',
-                                    'orange' => 'rgb(255,165,0)',
-                                    'green' => 'rgb(0,255,0)',
-                                    'teal' => 'rgb(0,128,128)',
-                                    'blue' => 'rgb(0,0,255)',
-                                    'darkblue' => 'rgb(0,0,139)',
-                                    'purple' => 'rgb(128,0,128)',
-                                    'pink' => 'rgb(255,192,203)',
-                                    'brown' => 'rgb(165,42,42)',
-                                    'yellow' => 'rgb(255,255,0)',
-                                    'gray' => 'rgb(128,128,128)',
-                                );
-                                $colour = strtolower($request->colour);
-                                if ($request->colour == '') {
-                                    $colour = "white";
-                                } elseif (isset($colours[$colour])) {
-                                    $colour = strtolower($request->colour);
-                                } else {
-                                    Log::info('Colour Not Specified in the List');
-                                    throw new FundoNotesException('Colour Not Specified in the List', 406);
-                                }
-                                LabelNotes::createNoteandLabel($request->id, $request->label_id, $user->id);
-                                $notes = Note::updateNote($notes, $request, $user->id, $colours[$colour]);
+                    $pin = $request->pin;
+                    $archive = $request->archive;
 
-                                Cache::forget('notes');
-                                
-                                Log::info('Notes Updated Successfully');
-                                if ($notes) {
-                                    return response()->json([
-                                        'message' => 'Note Updated Successfully'
-                                    ], 201);
-                                }
+                    if ($pin != "0" && $pin != "1" && $pin != "") {
+                        Log::error('Invalid Input For Pin');
+                        throw new FundoNotesException("Invalid Input For Pin", 400);
+                    }
+
+                    if ($archive != "0" && $archive != "1" && $archive != "") {
+                        Log::error('Invalid Input For Archive');
+                        throw new FundoNotesException("Invalid Input For Archive", 400);
+                    }
+
+                    if ($pin == "1" && $archive == "1") {
+                        Log::error('Pin and Archive Cannot be True at the Same Time');
+                        throw new FundoNotesException('Pin and Archive Cannot be True at the Same Time', 409);
+                    }
+
+                    $colours  =  array(
+                        'white' => 'rgb(255,255,255)',
+                        'red' => 'rgb(255,0,0)',
+                        'orange' => 'rgb(255,165,0)',
+                        'green' => 'rgb(0,255,0)',
+                        'teal' => 'rgb(0,128,128)',
+                        'blue' => 'rgb(0,0,255)',
+                        'darkblue' => 'rgb(0,0,139)',
+                        'purple' => 'rgb(128,0,128)',
+                        'pink' => 'rgb(255,192,203)',
+                        'brown' => 'rgb(165,42,42)',
+                        'yellow' => 'rgb(255,255,0)',
+                        'gray' => 'rgb(128,128,128)',
+                    );
+                    $colour = strtolower($request->colour);
+                    if ($request->colour == '') {
+                        $colour = "white";
+                    } elseif (isset($colours[$colour])) {
+                        $colour = strtolower($request->colour);
+                    } else {
+                        Log::error('Colour Not Specified in the List');
+                        throw new FundoNotesException('Colour Not Specified in the List', 406);
+                    }
+
+                    $label = Label::getLabelByLabelIdandUserId($request->label_id, $user->id);
+                    if ($label || $request->label_id == '') {
+                        $notes = Note::updateNote($notes, $request, $user->id, $colours[$colour]);
+                        $labelnote = LabelNotes::getLabelNotesbyLabelIdNoteIdandUserId($request->label_id, $request->id, $user->id);
+
+                        if ($label) {
+                            if (!$labelnote) {
+                                LabelNotes::createNoteandLabel($request->id, $request->label_id, $user->id);
                             }
                         }
+                        Log::info('Notes Updated Successfully For User::' . $user->id);
+                        return response()->json([
+                            'message' => 'Note Updated Successfully'
+                        ], 201);
+                    } elseif ($request->label_id > 0) {
+                        Log::error('Label Not Found For User::' . $user->id);
+                        throw new FundoNotesException('Label Not Found', 404);
+                    } else {
+                        Log::info('Invalid Label Id');
+                        throw new FundoNotesException('Invalid Label Id', 400);
                     }
                 }
             }
@@ -338,14 +368,16 @@ class NoteController extends Controller
                 Log::error('Invalid Authorization Token');
                 throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
+                Cache::put('notes', Note::getNotesandItsLabels($currentUser), 60 * 60 * 24);
+                $notes = Cache::get('notes');
 
-                $notes = Cache::remember('notes', 60 * 60 * 24, function () {
-                    return Note::getNotesandItsLabels(Auth::user());
-                });
+                // $notes = Cache::remember('notes', 60 * 60 * 24, function () {
+                //     return Note::getNotesandItsLabels(Auth::user());
+                // });
 
                 //$notes = Note::getNotesandItsLabels($currentUser);
                 if (!$notes) {
-                    Log::error('Notes Not Found');
+                    Log::error('Notes Not Found For User:: ' . $currentUser->id);
                     throw new FundoNotesException('Notes Not Found', 404);
                 } else {
                     Log::info('All Notes are Fetched Successfully for User:: ' . $currentUser->id);
@@ -378,7 +410,7 @@ class NoteController extends Controller
      *            ),
      *        ),
      *    ),
-     *   @OA\Response(response=201, description="Note Deleted Successfully"),
+     *   @OA\Response(response=200, description="Note Deleted Successfully"),
      *   @OA\Response(response=404, description="Notes Not Found"),
      *   @OA\Response(response=401, description="Invalid Authorization Token"),
      *   security={
@@ -413,7 +445,7 @@ class NoteController extends Controller
             } else {
                 $notes = Note::getNotesByNoteIdandUserId($id, $currentUser->id);
                 if (!$notes) {
-                    Log::error('Notes Not Found');
+                    Log::error('Notes Not Found For User:: ' . $currentUser->id);
                     throw new FundoNotesException('Notes Not Found', 404);
                 } else {
                     Cache::forget('notes');
@@ -422,7 +454,7 @@ class NoteController extends Controller
                     if ($notes->delete()) {
                         return response()->json([
                             'message' => 'Note Deleted Successfully'
-                        ], 201);
+                        ], 200);
                     }
                 }
             }
@@ -486,8 +518,8 @@ class NoteController extends Controller
                 $notes = Note::getNotesByNoteIdandUserId($request->note_id, $user->id);
                 $label = Label::getLabelByLabelIdandUserId($request->label_id, $user->id);
                 if (!$notes || !$label) {
-                    Log::error('Note or Label Not Found');
-                    throw new FundoNotesException('Notes or Label Not Found', 404);
+                    Log::error('Note or Label Not Found For User:: ' . $user->id);
+                    throw new FundoNotesException('Note or Label Not Found', 404);
                 } else {
                     $labelnote = LabelNotes::getLabelNotesbyLabelIdNoteIdandUserId($request->label_id, $request->note_id, $user->id);
                     if ($labelnote) {
@@ -495,10 +527,6 @@ class NoteController extends Controller
                         throw new FundoNotesException('Note Already Have This Label', 409);
                     } else {
                         LabelNotes::createNoteLabel($request, $user->id);
-
-                        Cache::remember('label_notes');
-                        Cache::forget('notes');
-
                         Log::info('LabelNote Added Successfully');
                         return response()->json([
                             'message' => 'LabelNote Added Successfully'
@@ -530,7 +558,7 @@ class NoteController extends Controller
      *            ),
      *        ),
      *    ),
-     *   @OA\Response(response=201, description="Label Note Successfully Deleted"),
+     *   @OA\Response(response=200, description="Label Note Successfully Deleted"),
      *   @OA\Response(response=404, description="LabelNotes Not Found With These Credentials"),
      *   @OA\Response(response=401, description="Invalid Authorization Token"),
      *   security={
@@ -574,9 +602,8 @@ class NoteController extends Controller
 
                     Log::info('Label Note Successfully Deleted');
                     return response()->json([
-                        'message' => 'Label Note Successfully Deleted',
-                        'NoteLabel' => $labelnote
-                    ], 201);
+                        'message' => 'Label Note Successfully Deleted'
+                    ], 200);
                 }
             }
         } catch (FundoNotesException $exception) {
@@ -634,7 +661,7 @@ class NoteController extends Controller
             } else {
                 $note = Note::getNotesByNoteIdandUserId($request->id, $currentUser->id);
                 if (!$note) {
-                    Log::error('Notes Not Found');
+                    Log::error('Notes Not Found For User:: ' . $currentUser->id);
                     throw new FundoNotesException('Notes Not Found', 404);
                 } else {
                     if ($note->pin == 0) {
@@ -712,7 +739,7 @@ class NoteController extends Controller
             } else {
                 $note = Note::getNotesByNoteIdandUserId($request->id, $currentUser->id);
                 if (!$note) {
-                    Log::error('Notes Not Found');
+                    Log::error('Notes Not Found For User:: ' . $currentUser->id);
                     throw new FundoNotesException('Notes Not Found', 404);
                 } else {
                     if ($note->pin == 1) {
@@ -768,7 +795,7 @@ class NoteController extends Controller
             } else {
                 $userNotes = Note::getPinnedNotesandItsLabels($currentUser);
                 if (!$userNotes) {
-                    Log::error('Notes Not Found');
+                    Log::error('Notes Not Found For User:: ' . $currentUser->id);
                     throw new FundoNotesException('Notes Not Found', 404);
                 }
                 Cache::remember('notes');
@@ -833,7 +860,7 @@ class NoteController extends Controller
             } else {
                 $note = Note::getNotesByNoteIdandUserId($request->id, $currentUser->id);
                 if (!$note) {
-                    Log::error('Notes Not found');
+                    Log::error('Notes Not Found For User:: ' . $currentUser->id);
                     throw new FundoNotesException('Notes Not Found', 404);
                 } else {
                     if ($note->archive == 0) {
@@ -911,7 +938,7 @@ class NoteController extends Controller
             } else {
                 $note = Note::getNotesByNoteIdandUserId($request->id, $currentUser->id);
                 if (!$note) {
-                    Log::error('Notes Not Found');
+                    Log::error('Notes Not Found For User:: ' . $currentUser->id);
                     throw new FundoNotesException('Notes Not Found', 404);
                 } else {
                     if ($note->archive == 1) {
@@ -967,11 +994,12 @@ class NoteController extends Controller
             } else {
                 $userNotes = Note::getArchivedNotesandItsLabels($currentUser);
                 if (!$userNotes) {
-                    Log::error('Notes Not Found');
+                    Log::error('Notes Not Found For User:: ' . $currentUser->id);
                     throw new FundoNotesException('Notes Not Found', 404);
                 }
                 Cache::remember('notes');
 
+                Log::info('Fetched All Archived Notes Successfully');
                 return response()->json([
                     'message' => 'Fetched All Archived Notes Successfully',
                     'notes' => $userNotes
@@ -1062,11 +1090,12 @@ class NoteController extends Controller
 
                         Cache::forget('notes');
 
-                        Log::info('Notes Coloured Successfully', ['user_id' => $currentUser, 'note_id' => $request->id]);
+                        Log::info('Notes Coloured Successfully', ['user_id' => $currentUser->id, 'note_id' => $request->id]);
                         return response()->json([
                             'message' => 'Note Coloured Sucessfully'
                         ], 201);
                     } else {
+                        Log::error('Colour Not Specified in the List');
                         throw new FundoNotesException('Colour Not Specified in the List', 406);
                     }
                 }

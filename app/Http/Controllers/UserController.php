@@ -99,7 +99,7 @@ class UserController extends Controller
      *  ),
      *  @OA\Response(response=404, description="Not a Registered Email"),
      *  @OA\Response(response=402, description="Wrong Password"),
-     *  @OA\Response(response=201, description="Login Successful")
+     *  @OA\Response(response=200, description="Login Successful")
      * )
      * 
      * This Function takes user registered email and password and
@@ -139,7 +139,7 @@ class UserController extends Controller
                 return response()->json([
                     'success' => 'Login Successful',
                     'token' => $token
-                ], 201);
+                ], 200);
             }
         } catch (FundoNotesException $exception) {
             return response()->json([
@@ -154,7 +154,7 @@ class UserController extends Controller
      *   summary="logout",
      *   description="logout user",
      *   @OA\RequestBody(),
-     *   @OA\Response(response=201, description="User Successfully Logged Out"),
+     *   @OA\Response(response=200, description="User Successfully Logged Out"),
      *   @OA\Response(response=401, description="Invalid Authorization Token"),
      *   security={
      *       {"Bearer": {}}
@@ -167,11 +167,16 @@ class UserController extends Controller
      */
     public function logout()
     {
-        auth()->logout();
-        Log::info('User Successfully Logged Out');
+        $user = auth()->logout();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'User successfully logged out.'
+            ], 200);
+        }
         return response()->json([
-            'message' => 'User Successfully Logged Out'
-        ], 201);
+            'message' => 'Invalid authorization token'
+        ], 401);
     }
 
     public function get_user(Request $request)

@@ -233,7 +233,7 @@
                     }
                 },
                 "responses": {
-                    "201": {
+                    "200": {
                         "description": "Label Successfully Deleted"
                     },
                     "404": {
@@ -270,15 +270,9 @@
                                     "description": {
                                         "type": "string"
                                     },
-                                    "label_id": {
-                                        "type": "integer"
-                                    },
-                                    "pin": {
-                                        "type": "boolean"
-                                    },
-                                    "archive": {
-                                        "type": "boolean"
-                                    },
+                                    "label_id": {},
+                                    "pin": {},
+                                    "archive": {},
                                     "colour": {}
                                 },
                                 "type": "object"
@@ -337,15 +331,9 @@
                                     "description": {
                                         "type": "string"
                                     },
-                                    "label_id": {
-                                        "type": "integer"
-                                    },
-                                    "pin": {
-                                        "type": "boolean"
-                                    },
-                                    "archive": {
-                                        "type": "boolean"
-                                    },
+                                    "label_id": {},
+                                    "pin": {},
+                                    "archive": {},
                                     "colour": {}
                                 },
                                 "type": "object"
@@ -360,17 +348,11 @@
                     "201": {
                         "description": "Note Updated Successfully"
                     },
-                    "204": {
-                        "description": "Label Not Found"
-                    },
                     "401": {
                         "description": "Invalid Authorization Token"
                     },
-                    "403": {
-                        "description": "This Note Already Have This Label"
-                    },
                     "404": {
-                        "description": "Notes Not Found"
+                        "description": "Label Not Found"
                     },
                     "406": {
                         "description": "Colour Not Specified in the List"
@@ -471,7 +453,7 @@
                     }
                 },
                 "responses": {
-                    "201": {
+                    "200": {
                         "description": "Note Deleted Successfully"
                     },
                     "404": {
@@ -568,7 +550,7 @@
                     }
                 },
                 "responses": {
-                    "201": {
+                    "200": {
                         "description": "Label Note Successfully Deleted"
                     },
                     "404": {
@@ -954,7 +936,7 @@
                     "402": {
                         "description": "Wrong Password"
                     },
-                    "201": {
+                    "200": {
                         "description": "Login Successful"
                     }
                 }
@@ -967,7 +949,7 @@
                 "operationId": "67d5147477c548bfbc3f982833bbc7bd",
                 "requestBody": {},
                 "responses": {
-                    "201": {
+                    "200": {
                         "description": "User Successfully Logged Out"
                     },
                     "401": {

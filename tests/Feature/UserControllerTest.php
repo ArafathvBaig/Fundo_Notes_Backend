@@ -58,7 +58,6 @@ class UserControllerTest extends TestCase
      * 
      * @test
      */
-
     public function successfulLoginTest()
     {
         $response = $this->withHeaders([
@@ -69,7 +68,7 @@ class UserControllerTest extends TestCase
                 "password" => "abcdefghij"
             ]
         );
-        $response->assertStatus(201)->assertJson(['success' => 'Login Successful']);
+        $response->assertStatus(200)->assertJson(['success' => 'Login Successful']);
     }
 
     /**
@@ -79,7 +78,6 @@ class UserControllerTest extends TestCase
      * 
      * @test
      */
-
     public function unSuccessfulLoginTest()
     {
         $response = $this->withHeaders([
@@ -107,7 +105,7 @@ class UserControllerTest extends TestCase
                 "email" => "arafathbaig1997@gmail.com"
             ]);
 
-            $response->assertStatus(404)->assertJson(['message' => 'Reset Password Token Sent to your Email']);
+            $response->assertStatus(201)->assertJson(['message' => 'Reset Password Token Sent to your Email']);
         }
     }
 
@@ -166,10 +164,10 @@ class UserControllerTest extends TestCase
             ])->json('POST', '/api/resetPassword', [
                 "new_password" => "arafath1234",
                 "password_confirmation" => "arafath1234",
-                "token" => '1234567890'
+                "token" => 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9sb2NhbGhvc3RcL2FwaVwvZm9yZ290UGFzc3dvcmQiLCJpYXQiOjE2NDk4MjgzMDgsImV4cCI6MTY0OTgzMTkwOCwibmJmIjoxNjQ5ODI4MzA4LCJqdGkiOiI1SURSMzdCY2lIR2VNak41Iiwic3ViIjozLCJwcnYiOiIyM2JkNWM4OTQ5ZjYwMGFkYjM5ZTcwMWM0MDA4NzJkYjdhNTk3NmY3In0.d93SpbOT1aL1qAOH9qjWfP2OdqfeB27vMV2fkx1hShA'
             ]);
 
-            $response->assertStatus(400)->assertJson(['message' => 'Wrong number of segments']);
+            $response->assertStatus(400)->assertJson(['message' => 'Invalid Authorization Token']);
         }
     }
 
@@ -187,7 +185,7 @@ class UserControllerTest extends TestCase
                 "token" => 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9sb2NhbGhvc3Q6ODAwMFwvYXBpXC9sb2dpbiIsImlhdCI6MTY0OTkyNTI2MCwiZXhwIjoxNjQ5OTI4ODYwLCJuYmYiOjE2NDk5MjUyNjAsImp0aSI6InI2VklQYlJkWXRscFFjU2EiLCJzdWIiOjQsInBydiI6IjIzYmQ1Yzg5NDlmNjAwYWRiMzllNzAxYzQwMDg3MmRiN2E1OTc2ZjcifQ.pd5x0pBsl9vdZaKPl2QMh_9WKRPNv2r5sFDjAgW5VTE'
             ]);
 
-            $response->assertStatus(201)->assertJson(['message' => 'User Successfully Logged Out']);
+            $response->assertStatus(200)->assertJson(['message' => 'User Successfully Logged Out']);
         }
     }
 
@@ -203,10 +201,10 @@ class UserControllerTest extends TestCase
             $response = $this->withHeaders([
                 'Content-Type' => 'Application/json',
             ])->json('POST', '/api/logout', [
-                "token" => '1234567890'
+                "token" => 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9sb2NhbGhvc3Q6ODAwMFwvYXBpXC9sb2dpbiIsImlhdCI6MTY0OTkyNTI2MCwiZXhwIjoxNjQ5OTI4ODYwLCJuYmYiOjE2NDk5MjUyNjAsImp0aSI6InI2VklQYlJkWXRscFFjU2EiLCJzdWIiOjQsInBydiI6IjIzYmQ1Yzg5NDlmNjAwYWRiMzllNzAxYzQwMDg3MmRiN2E1OTc2ZjcifQ.pd5x0pBsl9vdZaKPl2QMh_9WKRPNv2r5sFDjAgW5VTE'
             ]);
 
-            $response->assertStatus(400)->assertJson(['message' => 'Wrong number of segments']);
+            $response->assertStatus(401)->assertJson(['message' => 'Invalid Authorization Token']);
         }
     }
 }
