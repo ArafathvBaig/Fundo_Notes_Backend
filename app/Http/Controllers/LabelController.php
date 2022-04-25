@@ -7,6 +7,8 @@ use App\Models\LabelNotes;
 use App\Models\Note;
 use App\Exceptions\FundoNotesException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -115,11 +117,16 @@ class LabelController extends Controller
                 Log::error('Invalid Authorization Token');
                 throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
-                $label = Label::getLabelsByUserId($user->id);
+                $label = Cache::remember('labels', 60 * 60 * 24, function () {
+                    return Label::where('user_id', Auth::user()->id)->get();
+                });
+                //$label = Label::getLabelsByUserId($user->id);
                 if (!$label) {
                     Log::error('Labels Not Found');
                     throw new FundoNotesException('Labels Not Found', 404);
                 } else {
+                    Cache::remember('labels');
+
                     Log::info('Labels Retrieved Successfully.');
                     return response()->json([
                         'message' => 'Labels Retrieved Successfully.',
@@ -191,6 +198,10 @@ class LabelController extends Controller
                 } else {
                     if ($label->labelname != $request->labelname) {
                         $label = Label::updateLabel($request->id, $request->labelname, $user->id);
+
+                        Cache::forget('labels');
+                        Cache::forget('notess');
+
                         if ($label) {
                             Log::info('Label Updated Successfully');
                             return response()->json([
@@ -264,6 +275,9 @@ class LabelController extends Controller
                     Log::error('Label Not Found');
                     throw new FundoNotesException('Label Not Found', 404);
                 } else {
+                    Cache::forget('labels');
+                    Cache::forget('notes');
+
                     $labels->delete($labels->id);
                     Log::info('Label Successfully Deleted');
                     return response()->json([

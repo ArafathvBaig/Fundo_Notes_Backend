@@ -235,6 +235,9 @@ class NoteController extends Controller
                                 }
                                 LabelNotes::createNoteandLabel($request->id, $request->label_id, $user->id);
                                 $notes = Note::updateNote($notes, $request, $user->id, $colours[$colour]);
+
+                                Cache::forget('notes');
+                                
                                 Log::info('Notes Updated Successfully');
                                 if ($notes) {
                                     return response()->json([
@@ -335,7 +338,12 @@ class NoteController extends Controller
                 Log::error('Invalid Authorization Token');
                 throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
-                $notes = Note::getNotesandItsLabels($currentUser);
+
+                $notes = Cache::remember('notes', 60 * 60 * 24, function () {
+                    return Note::getNotesandItsLabels(Auth::user());
+                });
+
+                //$notes = Note::getNotesandItsLabels($currentUser);
                 if (!$notes) {
                     Log::error('Notes Not Found');
                     throw new FundoNotesException('Notes Not Found', 404);
@@ -408,6 +416,8 @@ class NoteController extends Controller
                     Log::error('Notes Not Found');
                     throw new FundoNotesException('Notes Not Found', 404);
                 } else {
+                    Cache::forget('notes');
+
                     Log::info('Note Deleted Successfully');
                     if ($notes->delete()) {
                         return response()->json([
@@ -485,6 +495,10 @@ class NoteController extends Controller
                         throw new FundoNotesException('Note Already Have This Label', 409);
                     } else {
                         LabelNotes::createNoteLabel($request, $user->id);
+
+                        Cache::remember('label_notes');
+                        Cache::forget('notes');
+
                         Log::info('LabelNote Added Successfully');
                         return response()->json([
                             'message' => 'LabelNote Added Successfully'
@@ -554,6 +568,10 @@ class NoteController extends Controller
                     throw new FundoNotesException('LabelNotes Not Found With These Credentials', 404);
                 } else {
                     $labelnote->delete($labelnote->id);
+
+                    Cache::forget('label_notes');
+                    Cache::forget('notes');
+
                     Log::info('Label Note Successfully Deleted');
                     return response()->json([
                         'message' => 'Label Note Successfully Deleted',
@@ -626,6 +644,9 @@ class NoteController extends Controller
                         }
                         $note->pin = 1;
                         $note->save();
+
+                        Cache::forget('notes');
+
                         Log::info('Note Pinned Successfully');
                         return response()->json([
                             'message' => 'Note Pinned Successfully'
@@ -697,6 +718,9 @@ class NoteController extends Controller
                     if ($note->pin == 1) {
                         $note->pin = 0;
                         $note->save();
+
+                        Cache::forget('notes');
+
                         Log::info('Note UnPinned Successfully');
                         return response()->json([
                             'message' => 'Note UnPinned Successfully'
@@ -747,6 +771,8 @@ class NoteController extends Controller
                     Log::error('Notes Not Found');
                     throw new FundoNotesException('Notes Not Found', 404);
                 }
+                Cache::remember('notes');
+
                 return response()->json([
                     'message' => 'Fetched All Pinned Notes Successfully',
                     'notes' => $userNotes
@@ -817,6 +843,9 @@ class NoteController extends Controller
                         }
                         $note->archive = 1;
                         $note->save();
+
+                        Cache::forget('notes');
+
                         Log::info('Note Archived Successfully');
                         return response()->json([
                             'message' => 'Note Archived Successfully'
@@ -888,6 +917,9 @@ class NoteController extends Controller
                     if ($note->archive == 1) {
                         $note->archive = 0;
                         $note->save();
+
+                        Cache::forget('notes');
+
                         Log::info('Note UnArchived Successfully');
                         return response()->json([
                             'message' => 'Note UnArchived Successfully'
@@ -938,6 +970,8 @@ class NoteController extends Controller
                     Log::error('Notes Not Found');
                     throw new FundoNotesException('Notes Not Found', 404);
                 }
+                Cache::remember('notes');
+
                 return response()->json([
                     'message' => 'Fetched All Archived Notes Successfully',
                     'notes' => $userNotes
@@ -1025,6 +1059,8 @@ class NoteController extends Controller
                     if (isset($colours[$colour])) {
                         $note->colour = $colours[$colour];
                         $note->save();
+
+                        Cache::forget('notes');
 
                         Log::info('Notes Coloured Successfully', ['user_id' => $currentUser, 'note_id' => $request->id]);
                         return response()->json([
