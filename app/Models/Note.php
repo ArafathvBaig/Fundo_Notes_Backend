@@ -11,7 +11,11 @@ class Note extends Model
     protected $table = 'notes';
     protected $fillable = [
         'title',
-        'description'
+        'description',
+        'pin',
+        'archive',
+        'colour',
+        'label'
     ];
 
     /**
@@ -87,6 +91,19 @@ class Note extends Model
     }
 
     /**
+     * Function to update the note of Collaborator
+     * Passing the notes and credentials to update
+     * 
+     * @return mixed
+     */
+    public static function updateCollaboratorNote($notes, $request)
+    {
+        $notes->title = $request->title;
+        $notes->description = $request->description;
+        return $notes->update();
+    }
+
+    /**
      * Function to get Note by Note_Id
      * Passing the Note_id as the parameter
      * 
@@ -130,10 +147,11 @@ class Note extends Model
      */
     public static function getNotesandItsLabels($user)
     {
-        $notes = Note::leftJoin('label_notes', 'label_notes.note_id', '=', 'notes.id')
+        $notes = Note::leftJoin('collaborators', 'collaborators.note_id', '=', 'notes.id')
+            ->leftJoin('label_notes', 'label_notes.note_id', '=', 'notes.id')
             ->leftJoin('labels', 'labels.id', '=', 'label_notes.label_id')
             ->select('notes.id', 'notes.title', 'notes.description', 'notes.pin', 'notes.archive', 'notes.colour', 'labels.labelname')
-            ->where('notes.user_id', $user->id)->paginate(4);
+            ->where('notes.user_id', $user->id)->orWhere('collaborators.email', $user->email)->paginate(4);
         return $notes;
     }
 

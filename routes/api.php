@@ -6,6 +6,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\LabelController;
+use App\Http\Controllers\CollaboratorController;
 use Illuminate\Support\Facades\Password;
 
 /*
@@ -50,6 +51,12 @@ Route::group(['middleware' => 'api'], function () {
     Route::get('readAllLabels', [LabelController::class, 'readAllLabels']);
     Route::post('updateLabel', [LabelController::class, 'updateLabel']);
     Route::post('deleteLabel', [LabelController::class, 'deleteLabel']);
+
+    Route::post('addCollaborator', [CollaboratorController::class, 'addCollaborator']);
+    Route::post('updateNoteByCollaborator', [CollaboratorController::class, 'updateNoteByCollaborator']);
+    Route::post('removeCollaborator', [CollaboratorController::class, 'removeCollaborator']);
+    Route::get('getAllCollaborators', [CollaboratorController::class, 'getAllCollaborators']);
+
 });
 
 Route::group(['middleware' => ['jwt.verify']], function () {
