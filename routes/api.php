@@ -46,6 +46,7 @@ Route::group(['middleware' => 'api'], function () {
     Route::post('unArchiveNoteById', [NoteController::class, 'unArchiveNoteById']);
     Route::get('getAllArchivedNotes', [NoteController::class, 'getAllArchivedNotes']);
     Route::post('colourNoteById', [NoteController::class, 'colourNoteById']);
+    Route::post('searchNotes', [NoteController::class, 'searchNotes']);
 
     Route::post('createLabel', [LabelController::class, 'createLabel']);
     Route::get('readAllLabels', [LabelController::class, 'readAllLabels']);

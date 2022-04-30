@@ -20,11 +20,11 @@ class Collaborator extends Model
      * 
      * @return array
      */
-    public static function createCollaborator($request, $user_id)
+    public static function createCollaborator($note_id, $email, $user_id)
     {
         $collab = new Collaborator();
-        $collab->note_id = $request->get('note_id');
-        $collab->email = $request->get('email');
+        $collab->note_id = $note_id;
+        $collab->email = $email;
         $collab->user_id = $user_id;
         $collab->save();
         return $collab;

@@ -57,7 +57,7 @@ class CollaboratorController extends Controller
                             throw new FundoNotesException('Collaborator Already Created', 401);
                         }
 
-                        $collab = Collaborator::createCollaborator($request, $currentUser->id);
+                        $collab = Collaborator::createCollaborator($request->note_id, $request->email, $currentUser->id);
                         if ($collab) {
                             $mail = new Mailer();
                             $mail->sendEmailToCollab($user, $note, $currentUser);
@@ -212,7 +212,7 @@ class CollaboratorController extends Controller
                     Log::error('Collaborators Not found');
                     throw new FundoNotesException('Collaborators Not found', 404);
                 }
-                
+
                 Log::info('Fetched Collaborators Successfully');
                 return response()->json([
                     'message' => 'Fetched Collaborators Successfully',
