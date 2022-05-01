@@ -7,6 +7,7 @@ use App\Models\Note;
 use App\Models\User;
 use App\Models\Label;
 use App\Models\Collaborator;
+use App\Notifications\MailToCollab;
 use App\Mail\Mailer;
 use App\Models\LabelNotes;
 use Illuminate\Http\Request;
@@ -128,14 +129,21 @@ class NoteController extends Controller
                 $label = Label::getLabelByLabelIdandUserId($request->label_id, $currentUser->id);
                 if ($label || $request->label_id == '') {
                     $user = User::getUserByEmail($request->collaborator_email);
+                    //$user = User::where('email', $request->collaborator_email);
                     if ($user || $request->collaborator_email == '') {
                         $note = Note::createNotes($request, $currentUser->id, $colours[$colour]);
                         if ($label) {
                             LabelNotes::createNoteandLabel($note->id, $request->label_id, $currentUser->id);
                         }
                         Collaborator::createCollaborator($note->id, $request->collaborator_email, $currentUser->id);
-                        $mail = new Mailer();
-                        $mail->sendEmailToCollab($user, $note, $currentUser);
+                        $collaborator = Note::select('id', 'title', 'description')->where('id', $note->id)->first();
+
+                        $delay = now()->addSeconds(60);
+                        $user->notify((new MailToCollab($currentUser->email, $collaborator))->delay($delay));
+
+                        // $mail = new Mailer();
+                        // $mail->sendEmailToCollab($user, $note, $currentUser);
+
                         Log::info('Notes Created Successfully For User::' . $currentUser->id);
                         return response()->json([
                             'message' => 'Notes Created Successfully'
@@ -381,14 +389,14 @@ class NoteController extends Controller
                 Log::error('Invalid Authorization Token');
                 throw new FundoNotesException('Invalid Authorization Token', 401);
             } else {
-                Cache::put('notes', Note::getNotesandItsLabels($currentUser), 60 * 60 * 24);
-                $notes = Cache::get('notes');
+                // Cache::put('notes', Note::getNotesandItsLabels($currentUser), 60 * 60 * 24);
+                // $notes = Cache::get('notes');
 
                 // $notes = Cache::remember('notes', 60 * 60 * 24, function () {
                 //     return Note::getNotesandItsLabels(Auth::user());
                 // });
 
-                //$notes = Note::getNotesandItsLabels($currentUser);
+                $notes = Note::getNotesandItsLabels($currentUser);
                 if (!$notes) {
                     Log::error('Notes Not Found For User:: ' . $currentUser->id);
                     throw new FundoNotesException('Notes Not Found', 404);
@@ -1132,7 +1140,7 @@ class NoteController extends Controller
      *            @OA\Schema(
      *               type="object",
      *               required={"search"},
-     *               @OA\Property(property="search", type="string"),
+     *               @OA\Property(property="search", type="string")
      *            ),
      *        ),
      *    ),

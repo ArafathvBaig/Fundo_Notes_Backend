@@ -11,12 +11,12 @@ class NoteControllerTest extends TestCase
     protected static $token;
     public static function setUpBeforeClass(): void
     {
-        self::$token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9sb2NhbGhvc3Q6ODAwMFwvYXBpXC9sb2dpbiIsImlhdCI6MTY1MDkwMDc3MSwiZXhwIjoxNjUwOTA0MzcxLCJuYmYiOjE2NTA5MDA3NzEsImp0aSI6Ikt5c2l5dHVwaVlHSnYwOHIiLCJzdWIiOjEsInBydiI6IjIzYmQ1Yzg5NDlmNjAwYWRiMzllNzAxYzQwMDg3MmRiN2E1OTc2ZjcifQ.ahpt4EJWkMVX_c1Qf_CUrFYYHBQ6uCU86yknjQmbrwA";
+        self::$token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9sb2NhbGhvc3Q6ODAwMFwvYXBpXC9sb2dpbiIsImlhdCI6MTY1MTQzMTM2MSwiZXhwIjoxNjUxNDM0OTYxLCJuYmYiOjE2NTE0MzEzNjEsImp0aSI6Im1TdmFzcXFTaTFnbXRvQXQiLCJzdWIiOjEsInBydiI6IjIzYmQ1Yzg5NDlmNjAwYWRiMzllNzAxYzQwMDg3MmRiN2E1OTc2ZjcifQ.lURZ82AjfHMGTf9IJab2hQxeXgx5eSKGkwnYTl3PviY";
     }
 
     /**
      * Successful Create Note Test
-     * Create not having title and description
+     * Using Credentials Required and
      * using the authorization token
      * 
      * @test
@@ -33,6 +33,7 @@ class NoteControllerTest extends TestCase
                 "pin" => "0",
                 "archive" => "0",
                 "colour" => "red",
+                "collaborator_email" => "arafathbaig1997@gmail.com",
                 "token" => self::$token
             ]);
         $response->assertStatus(201)->assertJson(['message' => 'Notes Created Successfully']);
@@ -40,9 +41,9 @@ class NoteControllerTest extends TestCase
 
     /**
      * UnSuccessful Create Note Test
-     * Create not having title and description
+     * Using Credentials Required and
      * using the authorization token
-     * Wrong token is used for this test
+     * Wrong Credentials is used for this test
      * 
      * @test
      */
@@ -58,6 +59,7 @@ class NoteControllerTest extends TestCase
                 "pin" => "1",
                 "archive" => "0",
                 "colour" => "red",
+                "collaborator_email" => "arafathbaig1997@gmail.com",
                 "token" => self::$token
             ]);
         $response->assertStatus(400)->assertJson(['message' => 'Invalid Label Id']);
@@ -90,7 +92,7 @@ class NoteControllerTest extends TestCase
     /**
      * UnSuccessful Update Note By ID Test
      * Update a note using id and authorization token
-     * Passing wrong note or note which is not for this user, for this test
+     * Passing wrong note or noteId which is not for this user, for this test
      * 
      * @test
      */
@@ -133,7 +135,7 @@ class NoteControllerTest extends TestCase
     /**
      * UnSuccessful Delete Note By ID Test
      * Delete note by using id and authorization token
-     * Passing wrong note or note which is not for this user, for this test
+     * Passing wrong note or noteId which is not for this user, for this test
      * 
      * @test
      */
@@ -414,5 +416,42 @@ class NoteControllerTest extends TestCase
                 "token" => self::$token
             ]);
         $response->assertStatus(406)->assertJson(['message' => 'Colour Not Specified in the List']);
+    }
+
+    /**
+     * Successful Search Note Test
+     * Search Note Using a key and Authorization Test
+     * 
+     * @test
+     */
+    public function successfulSearchNotesTest()
+    {
+        $response = $this->withHeaders([
+            'Content-Type' => 'Application/json',
+        ])
+            ->json('POST', '/api/searchNotes', [
+                "search" => "Tasks",
+                "token" => self::$token
+            ]);
+        $response->assertStatus(200)->assertJson(['message' => 'Fetched Notes Successfully']);
+    }
+
+    /**
+     * UnSuccessful Search Note Test
+     * Search Note Using a key and Authorization Token
+     * Using Wrong Credentials for UnSuccessful test
+     * 
+     * @test
+     */
+    public function unSuccessfulSearchNotesTest()
+    {
+        $response = $this->withHeaders([
+            'Content-Type' => 'Application/json',
+        ])
+            ->json('POST', '/api/searchNotes', [
+                "search" => "elephant",
+                "token" => self::$token
+            ]);
+        $response->assertStatus(404)->assertJson(['message' => 'Notes Not Found']);
     }
 }

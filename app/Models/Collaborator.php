@@ -45,7 +45,7 @@ class Collaborator extends Model
      */
     public static function getCollaborator($note_id, $email)
     {
-        $collabUser = Collaborator::where('note_id', $note_id)->where('email', $email)->get();
+        $collabUser = Collaborator::where('note_id', $note_id)->where('email', $email)->first();
         return $collabUser;
     }
 
